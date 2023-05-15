@@ -1,0 +1,298 @@
+---
+output: html_document
+---
+
+
+```{r, echo=FALSE}
+# Packages and external functions
+library("ggplot2")
+library("gridExtra")
+library("readr")
+library("dplyr", warn.conflicts = FALSE)
+library("lmerTest")
+library("kernlab")
+source("../shared/functions.R")
+options(pillar.subtle = FALSE)
+```
+
+```{r, echo=FALSE}
+depths = -1 * (seq(0, 21, 1) * (16.2/21) + 0.5)
+# depths
+width = abs(mean(diff(depths)))
+depth_ivals = c(depths[1] + 0.5 * width, depths - 0.5 * width)
+# depth_ivals
+pairwise_depths = 0.5 * (depths[seq(1, 21, 2)] + depths[seq(2, 22, 2)])
+# pairwise_depths
+```
+
+# RootTracker
+
+RootTracker is a device for non-destructively monitoring root system
+architecture.  It has a cylindrical form factor.  Twelve printed
+circuit board paddles are arranged in a circular fashion at a fixed
+radius and each paddle runs parallel to the z-axis in cylindrical
+coordinates.  Running down the paddle are 22 electrodes, which are
+used to detect root growth.
+
+RootTracker raw data is collected every 5 minutes.  An algorithm
+analyzes that data to identify when a root passes by a sensor.  The
+algorithm also keeps track of a device's algorithmic "uptime" which
+are the times for which the device is collecting data and that data
+passes quality control filters.  Ultimately, data is aggregated to the
+hour level, and for a given paddle and electrode RootTracker reports
+the number of detections at that electrode and the number of 5 minute
+intervals of uptime.
+
+We aggregate the data further in preprocessing so that we record the
+number of detections for pairs of electrodes over an entire day.
+
+# Data set
+
+As you can see below, the RootTracker data set we will be working with
+has the following attributes:
+
+- `electrode_pair`: the pair of electrodoes running down the paddle, e.g. 1st, 2nd, etc., as an integer
+- `paddle`: the paddle, a characeter A-L
+- `date`: the date
+- `device_id`: the device id
+- `count`: the number of detections at that electrode pair, paddle, and day
+- `uptime`: the number of 5 minute increments of uptime for that electrode pair, paddle, and day
+- `depth_cm`: the average depth of the electrode pair
+- `x`: the x location of the device
+- `y`: the y location of the device
+- `crop`: the crop, e.g. Corn, Wheat, etc.
+- `rep`: the block rep, 1 or 2
+- `bench`: the bench in the greenhouse
+- `days_since_start`: the days since the start of the experiment
+
+The electrodes near the surface can be susceptible to volatile raw
+signals.  The same is true for the first few days of an experiment as
+soil settles.  Thus, after loading the data, we remove the first pair
+of electrodes and the first 4 days.
+
+```{r}
+df_all = load_rt_data("../data/acc-1-v3.csv") %>%
+    filter(uptime > 0, electrode_pair > 1, days_since_start > 4)
+```
+```{r, echo=FALSE}
+knitr::kable(head(df_all, n=5))
+```
+
+We further modify the data by assuming that even if there is more than
+one detection within a day, for a given paddle and electrode pair
+combination, that only corresponds to one root.  Below we will often
+aggregate data and then compute a rate of root growth, which is
+`count/uptime`.  This lets us normalize the root count by the amount
+of algorithmic uptime, effectively accounting for the number of
+observations we have over the period of interest, or conversely the
+amount of missing data.
+
+```{r}
+df_all$old_count = df_all$count
+df_all$count = 1 * (df_all$old_count > 0)
+df_all$rate = with(df_all, count / uptime)
+```
+
+
+# Root growth over time
+
+We want to understand how root system architecture evolves over time.
+We will restrict our attention to how the distribution of root growth
+by depth changes over time.  To be clear, we are interested a species'
+average root growth, but we expect there to be plant-to-plant
+deviations from that average, as well as measurement error, hence
+smoothing the data is critical.
+
+## Smoothing by pieces
+
+One approach to smoothing is to aggregate time and depth into
+sufficiently large chunks.  Below we group the date into 4 day chunks
+and we group depths into the following bins:
+
+```{r, echo=FALSE, comment=""}
+depth_bins_coarse = depth_ivals[seq(3, 23, by=4)]
+```
+```{r}
+df_coarse = coarsen_rt_data(
+    df_all,
+    days_since_start = seq(0, 28, 4),
+    depth_cm = depth_bins_coarse
+)
+```
+
+We have not actually aggregated anything yet, we have just created
+larger bins for time and depth, as seen below.
+
+```{r, echo=FALSE}
+knitr::kable(head(df_coarse, n=5))
+```
+
+We can then aggregate the `count` and `uptime` and compute the
+corresponding rate of growth.
+
+```{r}
+df_time_elec = agg_rt_data(df_coarse, crop, days_since_start, depth_cm)
+```
+
+```{r, echo=FALSE, comment=""}
+knitr::kable(df_time_elec[1:5,])
+```
+
+We can now plot these averages by depth and time for corn and wheat.
+For both species, we appear to have shallower root growth, initially,
+which then moves deeper later.  Below, we will consider more
+sophisticated smoothing to produce a higher resolution picture.
+
+```{r, echo=FALSE, fig.width=8, fig.height=4}
+df_time_elec %>%
+    filter(
+        crop %in% c("Corn", "Wheat"),
+    ) %>%
+    ggplot() +
+    geom_tile(aes(days_since_start, depth_cm, fill=rate)) + 
+    scale_fill_gradient2(midpoint=median(df_time_elec$rate)) +
+    # scale_fill_gradientn(colours = terrain.colors(10)) +
+    facet_wrap(~ crop) +
+    theme(axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)) +
+    ggtitle("Average rate of root growth by depth and date for corn and wheat")
+```
+
+
+### Partitioning variation
+
+As mentioned previously, we are interested in the species-level
+average root growth by time and depth, but there are other sources of
+variation, like plant-to-plant deviations from that average.  We use a
+mixed model to partition this variation, including both time-depth and
+time-depth-device random effects.
+
+```{r}
+df_coarse_corn = df_coarse %>% filter(crop == "Corn", uptime > 0)
+```
+```{r}
+mm_coarse_corn = lmer(
+    rate ~ (1|days_since_start:depth_cm) + (1|days_since_start:depth_cm:device_id),
+    data=df_coarse_corn
+)
+```
+
+As we can see below, the amount of variation in when and where the
+roots are growing, for the species average, is of roughly of the same
+order, though slightly less than the deviation in that average for
+each device.  The residual variance represents not just measurement
+error, but differences in when and where detections are occurring
+within each bin, so it is not surprising that this number is
+relatively large.
+
+```{r, comment="", echo=FALSE}
+summary(mm_coarse_corn)
+```
+
+Doing the same thing for wheat, we see a similar story.
+```{r, echo=FALSE}
+df_coarse_wheat = df_coarse %>% filter(crop == "Wheat", uptime > 0)
+mm_coarse_wheat = lmer(
+    rate ~ (1|days_since_start:depth_cm) + (1|days_since_start:depth_cm:device_id),
+    data=df_coarse_wheat
+)
+```
+
+```{r, comment="", echo=FALSE}
+summary(mm_coarse_wheat)
+```
+
+
+## Smoothing via a kernel
+
+We now want to adopt a more sophisticated approach to inferring the
+average root growth by time and depth.  In particular, we will employ
+a Gaussian process to infer this surface.
+
+For the sake of computational convenience, we still aggregate some,
+but not only by two day increments and depths within the following
+break points.
+
+```{r, echo=FALSE, comment=""}
+depth_bins_coarse_gp = depth_ivals[seq(3, 23, by=2)]
+```
+
+```{r}
+df_coarse_gp = coarsen_rt_data(
+    df_all,
+    days_since_start = seq(0, 28, 2),
+    depth_cm = depth_bins_coarse_gp
+)
+```
+
+We then aggregate the count and uptime on that coarser grid and over
+all paddles.  We extract coordinates from our depth and time groups
+(which are ordered factors).
+
+```{r}
+df_dev_time_elec = agg_rt_data(df_coarse_gp, crop, device_id, rep, days_since_start, depth_cm) %>%
+    mutate(
+        days_coord = as.numeric(days_since_start),
+        depth_coord = as.numeric(depth_cm)
+    ) %>%
+    ungroup()
+```
+
+```{r, echo=FALSE}
+knitr::kable(head(df_dev_time_elec, n=5))
+```
+
+For our Gaussian process model we use a squared exponential kernel
+where the distance between points is determined using the date and
+depth coordinates defined above.  The length scale is fit to the data
+by default for `gausspr`.  Note, we first demean `y`.
+```{r}
+df_dte_corn = df_dev_time_elec %>% filter(crop == "Corn")
+ym = mean(df_dte_corn$rate)
+ygp = df_dte_corn$rate - ym
+```
+```{r}
+gp1 = gausspr(x = ~ days_coord + depth_coord, y = ygp, data = df_dte_corn)
+```
+
+```{r, echo=FALSE, comment=""}
+gp1
+```
+
+We can explicitly set the length scale to enforce more smoothing.
+```{r}
+gp2 = gausspr(x = ~ days_coord + depth_coord, y = ygp, data = df_dte_corn, kpar = list(sigma=0.2))
+```
+
+```{r, echo=FALSE}
+df_agg_fit = df_dte_corn %>%
+    select(days_since_start, depth_cm, days_coord, depth_coord) %>%
+    distinct()
+df_agg_fit$yhat1 = predict(gp1, df_agg_fit) + ym
+df_agg_fit$yhat2 = predict(gp2, df_agg_fit) + ym
+```
+
+In either case, a picture of root growth emerges for corn in which
+there root growth is shallower initially, and then it moves deeper
+over time.
+
+```{r, echo=FALSE, fig.width=12, fig.height=5}
+p_gp_1 <- ggplot(df_agg_fit) + 
+    geom_tile(aes(days_since_start, depth_cm, fill=yhat1)) +
+    scale_fill_gradient2(midpoint=ym) +
+    ggtitle("Length scale fit by data") +
+    theme(
+        plot.title = element_text(size=10),
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)
+    )
+
+p_gp_2 <- ggplot(df_agg_fit) + 
+    geom_tile(aes(days_since_start, depth_cm, fill=yhat2)) +
+    scale_fill_gradient2(midpoint=ym) +
+    ggtitle("Length scale chosen for more smoothing") +
+    theme(
+        plot.title = element_text(size=10),
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)
+    )
+
+grid.arrange(p_gp_1, p_gp_2, ncol=2, top="Posterior mean rate of root growth by depth and time for corn")
+```
