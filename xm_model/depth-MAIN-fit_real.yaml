@@ -1,0 +1,40 @@
+rad: &rad 8.0
+lb: &lb -20.0
+mu_dx: 4.0
+prior_data:
+  -
+  -
+    r: *rad
+    lb: *lb
+    ub: 0.
+    mu_dm_prior_mean: -0.5
+    mu_dm_prior_std: 0.5
+    sig_dm_prior_mean: 0.3
+    sig_dm_prior_std: 0.3
+  -
+  -
+  -
+    r: *rad
+    mu_dm_prior_mean: -0.5
+    mu_dm_prior_std: 0.5
+    sig_dm_prior_mean: 0.3
+    sig_dm_prior_std: 0.3
+    shape_dm_prior_mean: 0.0
+    shape_dm_prior_std: 4
+  -
+    r: *rad
+    min_depth: *lb
+    mu_dm_prior_mean: -0.5
+    mu_dm_prior_std: 0.5
+    sig_dm_prior_mean: 0.3
+    sig_dm_prior_std: 0.3
+sim_data:
+  -
+  -
+    lb: *lb
+    ub: 0.
+  -
+  -
+  -
+  -
+    min_depth: *lb

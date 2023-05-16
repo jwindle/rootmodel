@@ -8,9 +8,7 @@ library("bayesplot")
 
 # CONFIG
 
-RAD = 8.
-MU_DX = 8./2
-K = ceiling(RAD / MU_DX) - 1
+MODELS_TO_RUN = c(2, 5, 6)
 
 USE = 0.2
 ITER = 800
@@ -18,39 +16,13 @@ WARMUP = 400
 CHAINS = 1
 CORES = 1
 
-MODELS_TO_RUN = c(2, 5, 6)
 
+config = read_yaml("depth-MAIN-fit_real.yaml")
 
-fit_config = list()
+config$K = with(config, ceiling(rad / mu_dx) - 1)
 
-fit_config[[2]] = list(
-  r = RAD,
-  lb = -20.,
-  ub = 0.,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3
-)
-
-fit_config[[5]] = list(
-  r = RAD,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3,
-  shape_dm_prior_mean = 0.0,
-  shape_dm_prior_std = 4
-)
-
-fit_config[[6]] = list(
-  r = RAD,
-  min_depth = -20.,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3
-)
+prior_data = config[["prior_data"]]
+sim_data = config[["sim_data"]]
 
 pars_of_interest = list()
 pars_of_interest[[2]] = c("mu_dm", "sig_dm")
@@ -92,42 +64,44 @@ df_all$epoch = cut(df_all$days_since_start, breaks=EPOCHS)
 df_all$epoch_group = as.integer(df_all$epoch)
 
 
+# Sanity check & df_time_elec used for comparisons below
+depth_bins_coarse = depth_ivals[seq(3, 23, by=4)]
 
-# Sanity check
-if (FALSE) {
-  
-  depth_bins_coarse = depth_ivals[seq(3, 23, by=4)]
+df_coarse = coarsen_rt_data(
+  df_all,
+    # days_since_start = seq(0, 28, 4),
+  days_since_start = EPOCHS,
+  depth_cm = depth_bins_coarse
+)
 
-  df_coarse = coarsen_rt_data(
-    df_all,
-    days_since_start = seq(0, 28, 4),
-    depth_cm = depth_bins_coarse
-  )
+df_time_elec = agg_rt_data(df_coarse, days_since_start, depth_cm) %>%
+  group_by(days_since_start) %>%
+  mutate(sum_rate = sum(rate)) %>%
+  ungroup() %>%
+  mutate(prop = rate / sum_rate)
 
-  df_time_elec = agg_rt_data(df_coarse, days_since_start, depth_cm) %>%
-    group_by(days_since_start) %>%
-    mutate(sum_rate = sum(rate)) %>%
-    ungroup() %>%
-    mutate(prop = rate / sum_rate)
+df_time_elec$epoch = df_time_elec$days_since_start
+df_time_elec$depth_bin = df_time_elec$depth_cm
+df_time_elec$days_since_start = NULL
+df_time_elec$depth_cm = NULL
+df_time_elec$sum_rate = NULL
 
-  head(df_time_elec)
+head(df_time_elec)
 
-  df_time_elec %>%
-    ggplot() +
-    geom_tile(aes(days_since_start, depth_cm, fill=rate)) + 
-    scale_fill_gradient2()
+df_time_elec %>%
+  ggplot() +
+  geom_tile(aes(epoch, depth_bin, fill=rate)) + 
+  scale_fill_gradient2()
 
-  df_time_elec %>%
-    ggplot() +
-    geom_line(aes(-as.integer(depth_cm), rate)) +
-    facet_wrap(~ days_since_start)
+df_time_elec %>%
+  ggplot() +
+  geom_line(aes(-as.integer(depth_bin), rate)) +
+  facet_wrap(~ epoch)
 
-  df_time_elec %>%
-    ggplot() +
-    geom_line(aes(-as.integer(depth_cm), prop)) +
-    facet_wrap(~ days_since_start)
-
-}
+df_time_elec %>%
+  ggplot() +
+  geom_line(aes(-as.integer(depth_bin), prop)) +
+  facet_wrap(~ epoch)
   
 
 # Sample (for testing routines)
@@ -140,6 +114,7 @@ y_data = depths_df$depth_cm
 group = depths_df$epoch_group
 N = length(y_data)
 M = length(levels(depths_df$epoch))
+
 
 # Run models
 samp_list = list()
@@ -155,10 +130,10 @@ for (model_num in MODELS_TO_RUN) {
     N = length(y_data),
     M = M,
     group = group,
-    mu_dx = MU_DX,
-    K = K
+    mu_dx = config$mu_dx,
+    K = config$K
   )
-  dat = c(dat_i, fit_config[[model_num]])
+  dat = c(dat_i, prior_data[[model_num]])
   # datenv = list2env(dat)
   
   # Simulate
@@ -201,4 +176,59 @@ for (model_num in MODELS_TO_RUN) {
 
   # Save sample for later?
 
+}
+
+
+# Compare to empirical probabilities
+for (model_num in MODELS_TO_RUN) {
+
+  stan_sim_file = sprintf("depth-m%02d-sim.stan", model_num)
+  
+  samp = samp_list[[model_num]]
+  pars = pars_of_interest[[model_num]]
+  
+
+  samp_array_2 = simplify2array(extract(samp, pars))
+
+  base_dat = c(
+    list(
+      N = 10,
+      r = config$rad,
+      mu_dx = config$mu_dx,
+      K = config$K
+    ),
+    sim_data[[model_num]]
+  )
+
+  sim_model = stan_model(stan_sim_file, verbose=FALSE)
+  
+  simulated_depths = posterior_predictive(sim_model, samp_array_2, base_dat)
+
+  epoch_levels = levels(df_time_elec$epoch)
+  
+  simulated_depths_df = discretized_depth_distribution(simulated_depths, depth_bins_coarse, epoch_levels)
+
+  simulated_depths_summary = simulated_depths_df %>%
+    group_by(epoch, depth_bin) %>%
+    summarize(n = n()) %>%
+    ungroup() %>%
+    filter(!is.na(depth_bin)) %>%
+    group_by(epoch) %>%
+    mutate(
+      n_epoch = sum(n)
+    ) %>%
+    ungroup() %>%
+    mutate(
+      prop = n / n_epoch
+    ) %>%
+    select(epoch, depth_bin, prop)
+
+  suffix = sprintf(".m%02d", model_num)
+  newcol = paste("prop", suffix, sep="")
+  if (newcol %in% colnames(df_time_elec)) {
+    df_time_elec[[newcol]] = NULL
+  }
+  
+  df_time_elec = merge(df_time_elec, simulated_depths_summary, by=c("epoch", "depth_bin"), suffixes=c("", suffix))
+  
 }
