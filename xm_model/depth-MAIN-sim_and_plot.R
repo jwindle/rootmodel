@@ -3,7 +3,7 @@
 source("../shared/functions.R")
 
 library("uuid")
-
+library("yaml")
 
 
 # Config
@@ -16,41 +16,44 @@ K = ceiling(RAD / MU_DX) - 1
 MODELS_TO_RUN = c(2, 5, 6)
 
 
-param_config = list()
+param_config = read_yaml("depth-MAIN-sim_and_plot.yaml")
 
-param_config[[2]] = list(
-  N = N,
-  r = RAD,
-  lb = -20.,
-  ub = 0.,
-  mu_dm = list(from=-1.0, to=-0.1, length.out=5),
-  sig_dm = list(from=0.1, to=0.4, length.out=3),
-  mu_dx = MU_DX,
-  K = K
-)
+## param_config = list()
 
-param_config[[5]] = list(
-  N = N,
-  r = RAD,
-  mu_dm = list(from=-1.0, to=-0.1, length.out=5),
-  sig_dm = list(from=0.1, to=0.4, length.out=3),
-  shape_dm = list(from=-2.0, to=2.0, length.out=3),
-  mu_dx = MU_DX,
-  K = K
-)
+## param_config[[2]] = list(
+##   N = N,
+##   r = RAD,
+##   lb = -20.,
+##   ub = 0.,
+##   mu_dm = list(from=-1.0, to=-0.1, length.out=5),
+##   sig_dm = list(from=0.1, to=0.4, length.out=3),
+##   mu_dx = MU_DX,
+##   K = K
+## )
 
-param_config[[6]] = list(
-  N = N,
-  r = RAD,
-  min_depth = -20.,
-  mu_dm = list(from=-1.0, to=-0.1, length.out=5),
-  sig_dm = list(from=0.1, to=0.4, length.out=3),
-  mu_dx = MU_DX,
-  K = K
-)
+## param_config[[5]] = list(
+##   N = N,
+##   r = RAD,
+##   mu_dm = list(from=-1.0, to=-0.1, length.out=5),
+##   sig_dm = list(from=0.1, to=0.4, length.out=3),
+##   shape_dm = list(from=-2.0, to=2.0, length.out=3),
+##   mu_dx = MU_DX,
+##   K = K
+## )
+
+## param_config[[6]] = list(
+##   N = N,
+##   r = RAD,
+##   min_depth = -20.,
+##   mu_dm = list(from=-1.0, to=-0.1, length.out=5),
+##   sig_dm = list(from=0.1, to=0.4, length.out=3),
+##   mu_dx = MU_DX,
+##   K = K
+## )
 
 
 # Generate UUID to use for filenames
+SESSION_UUID = "TEST"
 # SESSION_UUID = UUIDgenerate(use.time=TRUE)
 
 
