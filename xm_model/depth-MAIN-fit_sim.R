@@ -3,10 +3,13 @@
 source("../shared/functions.R")
 
 library("rstan")
-
 library("bayesplot")
+library("yaml")
 
-RAD = 8.
+
+
+
+MODELS_TO_RUN = c(2, 5, 6)
 
 USE = 0.1
 ITER = 3000
@@ -14,39 +17,10 @@ WARMUP = 1500
 CHAINS = 2
 CORES = 2
 
-MODELS_TO_RUN = c(2, 5, 6)
 
+config = read_yaml("depth-MAIN-fit_sim.yaml")
 
-fit_config = list()
-
-fit_config[[2]] = list(
-  r = RAD,
-  lb = -20.,
-  ub = 0.,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3
-)
-
-fit_config[[5]] = list(
-  r = RAD,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3,
-  shape_dm_prior_mean = 0.0,
-  shape_dm_prior_std = 4
-)
-
-fit_config[[6]] = list(
-  r = RAD,
-  min_depth = -20.,
-  mu_dm_prior_mean = -0.5,
-  mu_dm_prior_std = 0.5,
-  sig_dm_prior_mean = 0.3,
-  sig_dm_prior_std = 0.3
-)
+fit_config = config[["prior_data"]]
 
 pars_of_interest = list()
 pars_of_interest[[2]] = c("mu_dm", "sig_dm")
