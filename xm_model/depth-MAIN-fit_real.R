@@ -4,6 +4,7 @@ source("../shared/functions.R")
 
 library("rstan")
 library("bayesplot")
+library("yaml")
 
 
 # CONFIG
