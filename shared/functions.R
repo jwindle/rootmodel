@@ -206,3 +206,30 @@ make_depths_df <- function(depths_list, param_df) {
   return(depths_df)
 }
 
+
+posterior_predictive <- function(model, par_array, base) {
+  # Extract par_array here?
+  ndim = length(dim(par_array))
+  Y = apply(par_array, 1:(ndim-1), function(x){
+    datx = c(base, as.list(x))
+    out = sampling(model, dat=datx, algorithm="Fixed_param", iter=1, chains=1)
+    return(extract(out, "y")[[1]])
+  })
+  return(Y)
+}
+
+
+discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
+  df_list = list()
+  dim_depths = dim(depths)
+  n_epochs = dim_depths[length(dim_depths)]
+  depths_matrix = matrix(depths, ncol=n_epochs, byrow=FALSE)
+  for (i in 1:n_epochs) {
+    df_list[[i]] = data.frame(depth_cm = depths_matrix[,i])
+    df_list[[i]]$epoch = epoch_levels[i]
+  }
+  df = do.call(rbind, df_list)
+  df$epoch = as.factor(df$epoch)
+  df$depth_bin = cut(df$depth_cm, breaks=depth_breaks)
+  return(df)
+}
