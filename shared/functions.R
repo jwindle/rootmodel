@@ -229,7 +229,7 @@ discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
     df_list[[i]]$epoch = epoch_levels[i]
   }
   df = do.call(rbind, df_list)
-  df$epoch = as.factor(df$epoch)
-  df$depth_bin = cut(df$depth_cm, breaks=depth_breaks)
+  df$epoch = as.ordered(df$epoch)
+  df$depth_bin = cut(df$depth_cm, breaks=depth_breaks, include.lowest=TRUE, ordered_result=TRUE)
   return(df)
 }

@@ -7,8 +7,6 @@ library("bayesplot")
 library("yaml")
 
 
-
-
 MODELS_TO_RUN = c(2, 5, 6)
 
 USE = 0.1
