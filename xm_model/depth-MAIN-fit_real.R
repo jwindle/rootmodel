@@ -4,17 +4,18 @@ source("../shared/functions.R")
 
 library("rstan")
 library("bayesplot")
+library("yaml")
 
 
 # CONFIG
 
 MODELS_TO_RUN = c(2, 5, 6)
 
-USE = 0.2
-ITER = 800
-WARMUP = 400
-CHAINS = 1
-CORES = 1
+USE = 1.0
+ITER = 3000
+WARMUP = 1000
+CHAINS = 8
+CORES = 8
 
 
 config = read_yaml("depth-MAIN-fit_real.yaml")
@@ -29,7 +30,7 @@ pars_of_interest[[2]] = c("mu_dm", "sig_dm")
 pars_of_interest[[5]] = c("mu_dm", "sig_dm", "shape_dm")
 pars_of_interest[[6]] = c("mu_dm", "sig_dm")
 
-SESSION_UUID = "REAL-DATA"
+SESSION_ID = "REAL-DATA-MU2"
 
 EPOCHS = c(0, 10, 18, 22, 28)
 
@@ -65,13 +66,14 @@ df_all$epoch_group = as.integer(df_all$epoch)
 
 
 # Sanity check & df_time_elec used for comparisons below
-depth_bins_coarse = depth_ivals[seq(3, 23, by=4)]
+depth_bins_no_pad = depth_ivals[seq(3, 23, by=4)]
+depth_bins = depth_bins_no_pad
 
 df_coarse = coarsen_rt_data(
   df_all,
     # days_since_start = seq(0, 28, 4),
   days_since_start = EPOCHS,
-  depth_cm = depth_bins_coarse
+  depth_cm = depth_bins
 )
 
 df_time_elec = agg_rt_data(df_coarse, days_since_start, depth_cm) %>%
@@ -161,13 +163,13 @@ for (model_num in MODELS_TO_RUN) {
   p_hist = mcmc_hist(samp_array) + ggtitle(sprintf("Posteriors M%02d", model_num))
   # p_hist
 
-  p_hist_file = sprintf("%s-m%02d-real-p_hist.png", SESSION_UUID, model_num)
+  p_hist_file = sprintf("%s-m%02d-real-p_hist.png", SESSION_ID, model_num)
   ggsave(p_hist, file=file.path("..", "images", "xm_model", p_hist_file))
 
   p_pairs = mcmc_pairs(samp_array, grid_args = list(top=sprintf("Pairs M%02d", model_num)))
   # p_pairs
 
-  p_pairs_file = sprintf("%s-m%02d-real-p_pairs.png", SESSION_UUID, model_num)
+  p_pairs_file = sprintf("%s-m%02d-real-p_pairs.png", SESSION_ID, model_num)
   ggsave(p_pairs, file=file.path("..", "images", "xm_model", p_pairs_file))
 
   # # Stan versions of plotting routines
@@ -179,14 +181,17 @@ for (model_num in MODELS_TO_RUN) {
 }
 
 
-# Compare to empirical probabilities
+# Compare to empirical probabilities - reusing simulation model for
+# simplicity, but it takes longer than if we did this in stan.
+
+df_comp_list = list()
+
 for (model_num in MODELS_TO_RUN) {
 
   stan_sim_file = sprintf("depth-m%02d-sim.stan", model_num)
   
   samp = samp_list[[model_num]]
   pars = pars_of_interest[[model_num]]
-  
 
   samp_array_2 = simplify2array(extract(samp, pars))
 
@@ -202,11 +207,19 @@ for (model_num in MODELS_TO_RUN) {
 
   sim_model = stan_model(stan_sim_file, verbose=FALSE)
   
-  simulated_depths = posterior_predictive(sim_model, samp_array_2, base_dat)
+  simulated_depths = posterior_predictive(
+    sim_model,
+    samp_array_2[seq(1, 16000, by=1),,],
+    base_dat
+  )
 
   epoch_levels = levels(df_time_elec$epoch)
   
-  simulated_depths_df = discretized_depth_distribution(simulated_depths, depth_bins_coarse, epoch_levels)
+  simulated_depths_df = discretized_depth_distribution(
+    simulated_depths,
+    depth_bins,
+    epoch_levels
+  )
 
   simulated_depths_summary = simulated_depths_df %>%
     group_by(epoch, depth_bin) %>%
@@ -223,12 +236,65 @@ for (model_num in MODELS_TO_RUN) {
     ) %>%
     select(epoch, depth_bin, prop)
 
-  suffix = sprintf(".m%02d", model_num)
-  newcol = paste("prop", suffix, sep="")
-  if (newcol %in% colnames(df_time_elec)) {
-    df_time_elec[[newcol]] = NULL
-  }
+  simulated_depths_summary$model = model_num
   
-  df_time_elec = merge(df_time_elec, simulated_depths_summary, by=c("epoch", "depth_bin"), suffixes=c("", suffix))
+  df_comp_list[[model_num]] = merge(
+    simulated_depths_summary,
+    df_time_elec[, c("epoch", "depth_bin", "prop")],
+    by=c("epoch", "depth_bin"),
+    suffixes=c("", ".emp"),
+    all.x=TRUE
+  ) %>%
+    mutate(
+      diff = prop - prop.emp,
+      klt = prop.emp * (log(prop.emp) - log(prop))
+    )
   
 }
+
+
+# Summarize differences
+
+df_comp_null = df_time_elec[,c("epoch", "depth_bin", "prop")] %>%
+  mutate(
+    model = 0,
+    prop.emp = prop,
+    diff = 0,
+    klt = 0
+  ) %>% as.data.frame()
+
+df_comp = do.call(rbind, c(df_comp_list, list(df_comp_null)))
+
+
+df_comp_summary = df_comp %>%
+  group_by(model, epoch) %>%
+  summarize(
+    mae = sum(abs(diff)),
+    kl = sum(klt),
+    check = sum(prop)
+  )
+
+
+df_comp_summary
+
+df_comp_summary %>%
+  group_by(model) %>%
+  summarize(
+    mmae = mean(mae),
+    mkl = mean(kl)
+  )
+
+
+comp_summary_file = sprintf("%s-fit_real-comp_summary.csv", SESSION_ID)
+write.csv(df_comp_summary, file=comp_summary_file)
+
+
+p_comp_prop = df_comp %>%
+  ggplot() +
+  geom_line(aes(-as.integer(depth_bin), prop, color=as.factor(model))) +
+  facet_wrap(~ epoch)
+
+
+p_comp_prop_file = sprintf("%s-fit_real-p_comp_prop.png", SESSION_ID)
+
+ggsave(p_comp_prop, file=file.path("..", "images", "xm_model", p_comp_prop_file))
