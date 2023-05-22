@@ -68,11 +68,13 @@ has the following attributes:
 The electrodes near the surface can be susceptible to volatile raw
 signals.  The same is true for the first few days of an experiment as
 soil settles.  Thus, after loading the data, we remove the first pair
-of electrodes and the first 4 days.
+of electrodes and the first 4 days.  We also adjust uptime so that it
+is measured in days, specifically electrode area-days.
 
 ```{r}
 df_all = load_rt_data("../data/acc-1-v3.csv") %>%
-    filter(uptime > 0, electrode_pair > 1, days_since_start > 4)
+    filter(uptime > 0, electrode_pair > 1, days_since_start > 4) %>%
+    mutate(uptime = uptime * 5 / (60 * 24))
 ```
 ```{r, echo=FALSE}
 knitr::kable(head(df_all, n=5))
@@ -127,34 +129,78 @@ larger bins for time and depth, as seen below.
 knitr::kable(head(df_coarse, n=5))
 ```
 
-We can then aggregate the `count` and `uptime` and compute the
-corresponding rate of growth.
+We can then aggregate the `count` and `uptime`.  
 
 ```{r}
 df_time_elec = agg_rt_data(df_coarse, crop, days_since_start, depth_cm)
+df_time_elec
 ```
 
 ```{r, echo=FALSE, comment=""}
 knitr::kable(df_time_elec[1:5,])
 ```
 
-We can now plot these averages by depth and time for corn and wheat.
-For both species, we appear to have shallower root growth, initially,
-which then moves deeper later.  Below, we will consider more
-sophisticated smoothing to produce a higher resolution picture.
+We can now plot these averages by depth and time.  For both corn and
+wheat, we appear to have shallower root growth, initially, which then
+moves deeper later.  We include two dicots here, soybean and cotton,
+to point out that they have distinct root growth as compared to the
+monocots, with what appears to be a spike of root growth in days 8-12
+or 12-16 and then little subsequent activity.  (Below, we will
+consider more sophisticated smoothing to produce a higher resolution
+picture.)
 
-```{r, echo=FALSE, fig.width=8, fig.height=4}
+```{r root-growth-tile, echo=FALSE, fig.width=8, fig.height=4}
+time_elec_med = median((df_time_elec %>% filter(crop %in% c("Corn", "Wheat")))$rate)
 df_time_elec %>%
+    filter(
+        crop %in% c("Corn", "Wheat", "Soy", "Cotton"),
+    ) %>%
+    ggplot() +
+    geom_tile(aes(days_since_start, depth_cm, fill=rate)) + 
+    scale_fill_gradient2(midpoint=time_elec_med) +
+    # scale_fill_gradientn(colours = terrain.colors(10)) +
+    facet_wrap(~ crop) +
+    theme(axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)) +
+    ggtitle("Average rate of root growth by depth, date, and species") +
+    guides(fill=guide_legend(title="rate\n(detections/day/\nelectrode area)"))
+```
+
+Breaking things out by rep, we see that both reps show similar
+patterns of root growth for each species.
+```{r}
+df_time_elec_rep = agg_rt_data(df_coarse, crop, rep, days_since_start, depth_cm)
+df_time_elec_rep %>%
     filter(
         crop %in% c("Corn", "Wheat"),
     ) %>%
     ggplot() +
     geom_tile(aes(days_since_start, depth_cm, fill=rate)) + 
-    scale_fill_gradient2(midpoint=median(df_time_elec$rate)) +
+    scale_fill_gradient2(midpoint=time_elec_med) +
     # scale_fill_gradientn(colours = terrain.colors(10)) +
-    facet_wrap(~ crop) +
+    facet_wrap(rep ~ crop) +
     theme(axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)) +
-    ggtitle("Average rate of root growth by depth and date for corn and wheat")
+    ggtitle("Average rate of root growth by depth, date, species, and rep") +
+    guides(fill=guide_legend(title="rate\n(detections/day/\nelectrode area)"))
+
+```
+
+As an alternative visualization, we can plot the rate of root growth
+across depths, stratified by our time groups.  In both the plots above
+and below, we see early root growth at shallower depths, which moves
+deeper over time.  The plots below also give us some sense of what the
+distribution of root growth by depth should look like.  In the case of
+corn, unimodal, with the mode moving deeper over time.
+
+```{r corn-growth-lines, echo=FALSE, fig.width=8, fig.height=4}
+df_time_elec %>%
+    filter(crop == "Corn") %>%
+    ggplot(aes(depth_cm, rate)) +
+    geom_path(group=1) +
+    facet_wrap(~ days_since_start) +
+    theme(axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)) +
+    ylab("rate (detect. / day / elect. area)") +
+    coord_flip() +
+    ggtitle("Rate of root growth by depth, stratified by 'days since start'")
 ```
 
 
@@ -275,15 +321,17 @@ In either case, a picture of root growth emerges for corn in which
 there root growth is shallower initially, and then it moves deeper
 over time.
 
-```{r, echo=FALSE, fig.width=12, fig.height=5}
+```{r gaussian-process-plots, echo=FALSE, fig.width=12, fig.height=5}
 p_gp_1 <- ggplot(df_agg_fit) + 
     geom_tile(aes(days_since_start, depth_cm, fill=yhat1)) +
     scale_fill_gradient2(midpoint=ym) +
     ggtitle("Length scale fit by data") +
     theme(
         plot.title = element_text(size=10),
-        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)
-    )
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1),
+        legend.title = element_text(size=8)
+    ) +
+    guides(fill=guide_legend(title="rate\n(detect./day/\nelec. area)"))
 
 p_gp_2 <- ggplot(df_agg_fit) + 
     geom_tile(aes(days_since_start, depth_cm, fill=yhat2)) +
@@ -291,8 +339,10 @@ p_gp_2 <- ggplot(df_agg_fit) +
     ggtitle("Length scale chosen for more smoothing") +
     theme(
         plot.title = element_text(size=10),
-        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1)
-    )
+        axis.text.x = element_text(angle=45, vjust=1.0, hjust=1),
+        legend.title = element_text(size=8)
+    ) +
+    guides(fill=guide_legend(title="rate\n(detect./day/\nelec. area)"))
 
 grid.arrange(p_gp_1, p_gp_2, ncol=2, top="Posterior mean rate of root growth by depth and time for corn")
 ```
