@@ -12,14 +12,16 @@ functions {
 data {
 	int<lower=1> N;
 	real<lower=0> r;
-	real lb;
-	real ub;
+	real min_depth;
+	real max_depth;
 	real <lower=0> mu_dx;
 	int<lower=1> K; /* ceil(r / mu_dx) - 1; does not work in stan */
 	real mu_dm;
 	real<lower=0> sig_dm;
 }
 transformed data {
+	real lb = min_depth;
+	real ub = max_depth;
 	vector[K+1] rvec = rep_vector(r, K+1);
 	vector[K+1] dx = rep_vector(mu_dx, K+1);
 	dx[1] = 0.0;

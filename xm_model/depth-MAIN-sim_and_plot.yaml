@@ -1,49 +1,57 @@
--
--
-  N: 100
-  r: 8.
-  lb: -20.
-  ub: 0.
-  mu_dm:
-    from: -1.0
-    to: -0.1
-    'length.out': 5
-  sig_dm:
-    from: 0.1
-    to: 0.4
-    'length.out': 3
-  mu_dx: [2.0, 2.66666666666667, 4.0]
-  K: [3, 2, 1]
--
--
--
-  N: 100
-  r: 8.
-  mu_dm:
-    from: -1.0
-    to: -0.1
-    'length.out': 5
-  sig_dm:
-    from: 0.1
-    to: 0.4
-    'length.out': 3
-  shape_dm:
-    from: -1.0
-    to: -0.1
-    'length.out': 3
-  mu_dx: [2.0, 2.66666666666667, 4.0]
-  K: [3, 2, 1]
--
-  N: 100
-  r: 8.
-  min_depth: -20.
-  mu_dm:
-    from: -1.0
-    to: -0.1
-    'length.out': 5
-  sig_dm:
-    from: 0.1
-    to: 0.4
-    'length.out': 3
-  mu_dx: [2.0, 2.66666666666667, 4.0]
-  K: [3, 2, 1]
+N: &N 100
+rad: &rad 8.0
+min_depth: &min_depth -16.32
+max_depth: &max_depth -2.30
+mu_dx: &mu_dx [2.0, 2.66666666666667, 4.0]
+K: &K [3, 2, 1]
+stan_data:
+  -
+  -
+    N: *N
+    r: *rad
+    lb: *min_depth
+    ub: *max_depth
+    mu_dm:
+      from: -1.0
+      to: -0.1
+      'length.out': 5
+    sig_dm:
+      from: 0.1
+      to: 0.4
+      'length.out': 3
+    mu_dx: *mu_dx
+    K: *K
+  -
+  -
+  -
+    N: *N
+    r: *rad
+    mu_dm:
+      from: -1.0
+      to: -0.1
+      'length.out': 5
+    sig_dm:
+      from: 0.1
+      to: 0.4
+      'length.out': 3
+    shape_dm:
+      from: -1.0
+      to: -0.1
+      'length.out': 3
+    mu_dx: *mu_dx
+    K: *K
+  -
+    N: *N
+    r: *rad
+    min_depth: *min_depth
+    max_depth: *max_depth
+    mu_dm:
+      from: -1.0
+      to: -0.1
+      'length.out': 5
+    sig_dm:
+      from: 0.1
+      to: 0.4
+      'length.out': 3
+    mu_dx: *mu_dx
+    K: *K

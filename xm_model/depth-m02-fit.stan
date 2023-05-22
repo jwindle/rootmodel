@@ -3,10 +3,10 @@ data {
 	int<lower=1> N;
 	int<lower=1> M;
 	real<lower=0> r;
-	real lb;
-	real ub;
 	real <lower=0> mu_dx;
 	int<lower=1> K; /* ceil(r / mu_dx) - 1; does not work in stan */
+	real <upper=0.0> min_depth;
+	real <upper=0.0> max_depth;
 	real mu_dm_prior_mean;
 	real mu_dm_prior_std;
 	real sig_dm_prior_mean;
@@ -15,6 +15,8 @@ data {
 	real y[N];
 }
 transformed data {
+	real lb = min_depth;
+	real ub = max_depth;
 	vector[K+1] rvec = rep_vector(r, K+1);
 	vector[K+1] dx = rep_vector(mu_dx, K+1);
 	dx[1] = 0.0;

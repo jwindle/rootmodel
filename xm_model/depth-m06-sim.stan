@@ -11,8 +11,9 @@ functions {
 }
 data {
 	int<lower=1> N;
-	real<lower=0> r;
-	real<upper=0> min_depth;
+	real<lower=0.> r;
+	real<upper=0.> min_depth;
+	real<upper=0.> max_depth;
 	real <lower=0> mu_dx;
 	int<lower=1> K; /* ceil(r / mu_dx) - 1; does not work in stan */
 	real mu_dm;
@@ -24,7 +25,7 @@ transformed data {
 	dx[1] = 0.0;
 	vector[K+1] x = cumulative_sum(dx);
 	vector[K+1] x_left = fdim(rvec, x);
-	real ub = 0.0;
+	real ub = max_depth / sum(x_left);
 	real lb = min_depth / sum(x_left);
 }
 generated quantities {
