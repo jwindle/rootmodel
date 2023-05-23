@@ -11,11 +11,11 @@ library("yaml")
 
 MODELS_TO_RUN = c(2, 5, 6)
 
-USE = 1.0
-ITER = 3000
-WARMUP = 1000
-CHAINS = 8
-CORES = 8
+USE = 0.2
+ITER = 800
+WARMUP = 400
+CHAINS = 1
+CORES = 1
 
 
 config = read_yaml("depth-MAIN-fit_real.yaml")
@@ -30,7 +30,8 @@ pars_of_interest[[2]] = c("mu_dm", "sig_dm")
 pars_of_interest[[5]] = c("mu_dm", "sig_dm", "shape_dm")
 pars_of_interest[[6]] = c("mu_dm", "sig_dm")
 
-SESSION_ID = "REAL-DATA-MU2"
+SESSION_ID = "TEST"
+# SESSION_ID = "REAL-DATA-MU2"
 
 EPOCHS = c(0, 10, 18, 22, 28)
 
@@ -126,7 +127,7 @@ for (model_num in MODELS_TO_RUN) {
   # Stan files
   stan_fit_file = sprintf("depth-m%02d-fit.stan", model_num)
   
-  # Param
+  # Param & pars of interest
   dat_i = list(
     y = y_data,
     N = length(y_data),
@@ -137,6 +138,8 @@ for (model_num in MODELS_TO_RUN) {
   )
   dat = c(dat_i, prior_data[[model_num]])
   # datenv = list2env(dat)
+
+  pars = pars_of_interest[[model_num]]
   
   # Simulate
   samp = stan(
@@ -149,12 +152,12 @@ for (model_num in MODELS_TO_RUN) {
     init_r = 1,
     control = list(max_treedepth=12),
     verbose = FALSE,
-    model_name = sprintf("depth-fit-m%02d", model_num)
+    model_name = sprintf("depth-fit-m%02d", model_num),
+    pars = pars
   )
   samp_list[[model_num]] = samp
 
   # Summary
-  pars = pars_of_interest[[model_num]]
   print(summary(samp, pars))
 
   # Plot
@@ -209,7 +212,7 @@ for (model_num in MODELS_TO_RUN) {
   
   simulated_depths = posterior_predictive(
     sim_model,
-    samp_array_2[seq(1, 16000, by=1),,],
+    samp_array_2[seq(1, (ITER - WARMUP) * CHAINS, by=10),,],
     base_dat
   )
 
@@ -286,6 +289,7 @@ df_comp_summary %>%
 
 
 comp_summary_file = sprintf("%s-fit_real-comp_summary.csv", SESSION_ID)
+
 write.csv(df_comp_summary, file=comp_summary_file)
 
 
