@@ -25,14 +25,14 @@ transformed data {
 	vector[K+1] rhoQpOne = Qp * one * x_left_ratio;
 	/* real mu_dm = mu_y / x_left_l1; */
 	/* real sig_dm = sig_y / x_left_l2; */
-	matrix[K,K+1] PT = path_transform(r, mu_dx, K);
+	matrix[K+1,K+1] PT = path_transform(r, mu_dx, K);
 }
 generated quantities {
 	vector[K+1] w[N];
 	vector[K+1] dm[N];
 	real z[N];
 	real y[N];
-	vector[K] path[N];
+	vector[K+1] path[N];
 	for (i in 1:N) {
 		z[i] = normal_rng(tilde_mu, sqrt(gamma) * tilde_sig);
 		w[i][1] = normal_lub_rng(z[i] * rhoQpOne[1], sqrt(1 - gamma) * tilde_sig, lb, ub);

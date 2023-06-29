@@ -10,19 +10,20 @@ data {
 	real tilde_mu_prior_std;
 	real tilde_sig_prior_mean;
 	real tilde_sig_prior_std;
+	real <lower=0.0, upper=1.0> frac_var;
 	int<lower=1, upper=M> group[N]; /* group membership */
 	real y[N];
-	/* Below is only necessary for going back to mu_dm and sig_dm */
-	real <lower=0> mu_dx;
-	int<lower=1> K; /* ceil(r / mu_dx) - 1; does not work in stan */
+	/* /\* Below is only necessary for going back to mu_dm and sig_dm *\/ */
+	/* real <lower=0> mu_dx; */
+	/* int<lower=1> K; /\* ceil(r / mu_dx) - 1; does not work in stan *\/ */
 }
 transformed data {
 	real lb = min_depth;
 	real ub = max_depth;
-	/* Below is only necessary for going back to mu_dm and sig_dm */
-	vector[K+1] x_left = x_left_from_mu_dx(r, mu_dx, K);
-	real x_left_one = sum(x_left);
-	real x_left_norm = sqrt(sum(square(x_left)));
+	/* /\* Below is only necessary for going back to mu_dm and sig_dm *\/ */
+	/* vector[K+1] x_left = x_left_from_mu_dx(r, mu_dx, K); */
+	/* real x_left_one = sum(x_left); */
+	/* real x_left_norm = sqrt(sum(square(x_left))); */
 }
 parameters {
 	real tilde_mu[M];
@@ -33,8 +34,8 @@ transformed parameters {
 	real sig_z[M];
 	real sig_y[M];
 	for (i in 1:M) {
-		sig_z[i] = gamma * tilde_sig[i];
-		sig_y[i] = (1 - gamma) * tilde_sig[i];
+		sig_z[i] = frac_var * tilde_sig[i];
+		sig_y[i] = (1 - frac_var) * tilde_sig[i];
 	}
 }
 model {
@@ -49,12 +50,12 @@ model {
 	}
 }
 generated quantities {
-	real mu[M];
-	real sig1[M];
-	real sig2[M];
-	for (i in 1:M) {
-		mu[i] = tilde_mu[i] / x_left_one;
-		sig1[i] = sqrt(gamma) * tilde_sig[i] / x_left_one;
-		sig2[i] = sqrt(1 - gamma) * tilde_sig[i] / x_left_norm;
-	}
+	/* real mu[M]; */
+	/* real sig1[M]; */
+	/* real sig2[M]; */
+	/* for (i in 1:M) { */
+	/* 	mu[i] = tilde_mu[i] / x_left_one; */
+	/* 	sig1[i] = sqrt(frac_var) * tilde_sig[i] / x_left_one; */
+	/* 	sig2[i] = sqrt(1 - frac_var) * tilde_sig[i] / x_left_norm; */
+	/* } */
 }
