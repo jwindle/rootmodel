@@ -1,0 +1,152 @@
+rad: &rad 8.0
+min_depth: &min_depth -16.32
+max_depth: &max_depth -2.43
+mu_dx_1k: &mu_dx_1k 4.0
+mu_dx_2k: &mu_dx_2k 2.67
+mu_dx_3k: &mu_dx_3k 2.0
+gamma: &gamma 0.50
+write: True
+models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k"]
+simulations_to_run: ["m08_1k", "m08_2k", "m08_3k"]
+data_frac: 1.0
+crop: "Corn"
+mcmc: &default_mcmc
+  iter: 6000
+  warmup: 3000
+  chains: 3
+  cores: 3
+models:
+  m08:
+    model: "m08"
+    prior_info:
+      r: *rad
+      min_depth: *min_depth
+      max_depth: *max_depth
+      mu_y_prior_mean: -8.0
+      mu_y_prior_std: 8.0
+      sig_y_prior_mean: 8.0
+      sig_y_prior_std: 8.0
+    keep_pars: ["mu_y", "sig_y"]
+    mcmc: *default_mcmc
+  m09:
+    model: "m09"
+    prior_info:
+      r: *rad
+      min_depth: *min_depth
+      max_depth: *max_depth
+      tilde_mu_prior_mean: -8.0
+      tilde_mu_prior_std: 8.0
+      tilde_sig_prior_mean: 8.0
+      tilde_sig_prior_std: 8.0
+      gamma: *gamma
+    keep_pars: ["tilde_mu", "tilde_sig", "gamma"]
+    mcmc: *default_mcmc
+  m10_1k:
+    model: "m10"
+    prior_info:
+      r: *rad
+      mu_dx: *mu_dx_1k
+      mu_y_prior_mean: -8.0
+      mu_y_prior_std: 4.0
+      sig_y_prior_mean: 4.0
+      sig_y_prior_std: 4.0
+      shape_dm_prior_mean: 0.0
+      shape_dm_prior_std: 4
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    mcmc: *default_mcmc
+  m10_2k:
+    model: "m10"
+    prior_info:
+      r: *rad
+      mu_dx: *mu_dx_2k
+      mu_y_prior_mean: -8.0
+      mu_y_prior_std: 4.0
+      sig_y_prior_mean: 4.0
+      sig_y_prior_std: 4.0
+      shape_dm_prior_mean: 0.0
+      shape_dm_prior_std: 4
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    mcmc: *default_mcmc
+  m10_3k:
+    model: "m10"
+    prior_info:
+      r: *rad
+      mu_dx: *mu_dx_3k
+      mu_y_prior_mean: -8.0
+      mu_y_prior_std: 4.0
+      sig_y_prior_mean: 4.0
+      sig_y_prior_std: 4.0
+      shape_dm_prior_mean: 0.0
+      shape_dm_prior_std: 4
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    mcmc: *default_mcmc
+simulations:
+  m08_1k:
+    model: "m08"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_1k
+      min_depth: *min_depth
+      max_depth: *max_depth
+    pars: ["mu_y", "sig_y"]
+  m08_2k:
+    model: "m08"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_2k
+      min_depth: *min_depth
+      max_depth: *max_depth
+    pars: ["mu_y", "sig_y"]
+  m08_3k:
+    model: "m08"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_3k
+      min_depth: *min_depth
+      max_depth: *max_depth
+    pars: ["mu_y", "sig_y"]
+  m09_1k:
+    model: "m09"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_1k
+      min_depth: *min_depth
+      max_depth: *max_depth
+      gamma: *gamma
+    pars: ["tilde_mu", "tilde_sig"]
+  m09_2k:
+    model: "m09"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_2k
+      min_depth: *min_depth
+      max_depth: *max_depth
+      gamma: *gamma
+    pars: ["tilde_mu", "tilde_sig"]
+  m09_3k:
+    model: "m09"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_3k
+      min_depth: *min_depth
+      max_depth: *max_depth
+      gamma: *gamma
+    pars: ["tilde_mu", "tilde_sig"]
+  m10_1k:
+    model: "m10"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_1k
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+  m10_2k:
+    model: "m10"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_2k
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+  m10_3k:
+    model: "m10"
+    sim_info:
+      r: *rad
+      mu_dx: *mu_dx_3k
+    keep_pars: ["mu_y", "sig_y", "shape_dm"]
