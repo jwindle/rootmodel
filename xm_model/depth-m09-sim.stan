@@ -9,7 +9,7 @@ data {
 	int<lower=1> K; /* ceil(r / mu_dx) - 1; does not work in stan */
 	real tilde_mu;
 	real tilde_sig;
-	real gamma;
+	real frac_var;
 }
 transformed data {
 	real lb = min_depth;
@@ -34,10 +34,10 @@ generated quantities {
 	real y[N];
 	vector[K+1] path[N];
 	for (i in 1:N) {
-		z[i] = normal_rng(tilde_mu, sqrt(gamma) * tilde_sig);
-		w[i][1] = normal_lub_rng(z[i] * rhoQpOne[1], sqrt(1 - gamma) * tilde_sig, lb, ub);
+		z[i] = normal_rng(tilde_mu, sqrt(frac_var) * tilde_sig);
+		w[i][1] = normal_lub_rng(z[i] * rhoQpOne[1], sqrt(1 - frac_var) * tilde_sig, lb, ub);
 		for (j in 2:(K+1)) {
-			w[i][j] = normal_rng(z[i] * rhoQpOne[j], sqrt(1 - gamma) * tilde_sig);
+			w[i][j] = normal_rng(z[i] * rhoQpOne[j], sqrt(1 - frac_var) * tilde_sig);
 		}
 		dm[i] = Q * w[i] / x_left_l2;
 		y[i] = dot_product(dm[i], x_left); /* Could simplify to x_til_norm * w[i][1] */
