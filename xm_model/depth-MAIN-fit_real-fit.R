@@ -14,22 +14,20 @@ config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 # EPOCHS = config$epochs
 MODELS_TO_RUN = config$models_to_run
+MODELS_TO_RUN = "m10_1k"
 MODELS_TO_RUN
 
 USE = config$data_frac
 CROP = config$crop
 c(USE, CROP)
 
-
 SESSION_ID = "TEST"
 
-
-# Load
+# Load and take subset of data
 # df_all = read.csv("data/acc-1-v3-cleaned.csv", stringsAsFactors=TRUE)
 load(file.path("cache", "detections.RData"))
 
 head(df_all)
-
 
 # Sample (for testing routines)
 depths_df = df_all %>%
@@ -40,8 +38,7 @@ depths_df = df_all %>%
 ## depths_df = df_all %>%
 ##   filter(count > 0, epoch_group == 2)
 
-
-# And get data for Stan
+# Get data for Stan
 y_data = depths_df$depth_cm
 group = depths_df$epoch_group
 N = length(y_data)
@@ -51,7 +48,7 @@ M = length(levels(depths_df$epoch))
 # Run models
 samp_list = list()
 
-for (model_name in names(config$models_to_run)) {
+for (model_name in MODELS_TO_RUN) {
 
   model_config = config$models[[model_name]]
   
@@ -61,7 +58,7 @@ for (model_name in names(config$models_to_run)) {
   }
 
   # Stan files
-  stan_fit_file = sprintf("depth-%s-fit.stan", model_config$model)
+  stan_fit_file = sprintf("depth-%s-fit.stan", model_config$stan_file_id)
   
   # Param & pars of interest
   dat_i = list(
@@ -86,11 +83,12 @@ for (model_name in names(config$models_to_run)) {
     warmup = mcmc_config$warmup,
     init_r = 1,
     control = list(max_treedepth=10, metric="diag_e"),
-    verbose = FALSE,
+    verbose = TRUE,
     model_name = sprintf("depth-fit-%s", model_name),
     pars = pars
   )
-  
+
+  samp_copy = samp
   # samp_list[[model_name]] = samp
 
   # Summary
@@ -120,8 +118,10 @@ for (model_name in names(config$models_to_run)) {
   # traceplot(samp, pars=pars)
 
   if (config$write) {
+    
     samp_file = sprintf("%s-fit.RData", model_name)
     save(samp, file=file.path("cache", samp_file))
+    
   }
 
 }

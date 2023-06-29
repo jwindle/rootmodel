@@ -27,18 +27,20 @@ samp_list = list()
 for (sim_name in SIMS_TO_RUN) {
 
   sim_config = config$simulations[[sim_name]]
+  model_config = config$models[[sim_config$model]]
   
   sim_info = sim_config$sim_info
   sim_info$K = with(sim_info, get_K(r, mu_dx))
 
   model_name = sim_config$model
-  stan_sim_file = sprintf("depth-%s-sim.stan", model_name)
+  
+  stan_sim_file = sprintf("depth-%s-sim.stan", model_config$stan_file_id)
 
   # This should load samp
   if (model_name %in% names(samp_list)) {
     samp = samp_list[[model_name]]
   } else {
-    samp_file = sprintf("%s-fit.RData", model_name)
+    samp_file = sprintf("%s-fit.RData", model_and_prior_name)
     load(file=file.path("cache", samp_file))
     samp_list[[model_name]] = samp
   }
@@ -58,9 +60,19 @@ for (sim_name in SIMS_TO_RUN) {
 
   sim_model = stan_model(file.path("xm_model", stan_sim_file), verbose=FALSE)
 
+  ## temp_test = sampling(
+  ##   sim_model,
+  ##   data=c(base_dat, as.list(samp_array_2[1,1,])),
+  ##   algorithm="Fixed_param",
+  ##   iter=1,
+  ##   chains=1
+  ## )
+
+  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=1)),,]
+  
   simulated_paths = posterior_predictive_paths(
     sim_model,
-    samp_array_2[seq(1, (ITER - WARMUP) * CHAINS, by=1),,],
+    samp_array_sub,
     base_dat
   )
 

@@ -4,20 +4,20 @@ max_depth: &max_depth -2.43
 mu_dx_1k: &mu_dx_1k 4.0
 mu_dx_2k: &mu_dx_2k 2.67
 mu_dx_3k: &mu_dx_3k 2.0
-gamma: &gamma 0.50
-write: True
+frac_var: &frac_var 0.50
+write: False
 models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k"]
 simulations_to_run: ["m08_1k", "m08_2k", "m08_3k"]
-data_frac: 1.0
+data_frac: 0.2
 crop: "Corn"
 mcmc: &default_mcmc
-  iter: 6000
-  warmup: 3000
-  chains: 3
-  cores: 3
+  iter: 800
+  warmup: 400
+  chains: 1
+  cores: 1
 models:
   m08:
-    model: "m08"
+    stan_file_id: "m08"
     prior_info:
       r: *rad
       min_depth: *min_depth
@@ -29,7 +29,7 @@ models:
     keep_pars: ["mu_y", "sig_y"]
     mcmc: *default_mcmc
   m09:
-    model: "m09"
+    stan_file_id: "m09"
     prior_info:
       r: *rad
       min_depth: *min_depth
@@ -38,11 +38,11 @@ models:
       tilde_mu_prior_std: 8.0
       tilde_sig_prior_mean: 8.0
       tilde_sig_prior_std: 8.0
-      gamma: *gamma
-    keep_pars: ["tilde_mu", "tilde_sig", "gamma"]
+      frac_var: *frac_var
+    keep_pars: ["tilde_mu", "tilde_sig"]
     mcmc: *default_mcmc
   m10_1k:
-    model: "m10"
+    stan_file_id: "m10"
     prior_info:
       r: *rad
       mu_dx: *mu_dx_1k
@@ -52,10 +52,10 @@ models:
       sig_y_prior_std: 4.0
       shape_dm_prior_mean: 0.0
       shape_dm_prior_std: 4
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    keep_pars: ["mu_y", "sig_y", "mu_dm", "sig_dm", "shape_dm"]
     mcmc: *default_mcmc
   m10_2k:
-    model: "m10"
+    stan_file_id: "m10"
     prior_info:
       r: *rad
       mu_dx: *mu_dx_2k
@@ -65,10 +65,10 @@ models:
       sig_y_prior_std: 4.0
       shape_dm_prior_mean: 0.0
       shape_dm_prior_std: 4
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    keep_pars: ["mu_y", "sig_y", "mu_dm", "sig_dm", "shape_dm"]
     mcmc: *default_mcmc
   m10_3k:
-    model: "m10"
+    stan_file_id: "m10"
     prior_info:
       r: *rad
       mu_dx: *mu_dx_3k
@@ -78,7 +78,7 @@ models:
       sig_y_prior_std: 4.0
       shape_dm_prior_mean: 0.0
       shape_dm_prior_std: 4
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    keep_pars: ["mu_y", "sig_y", "mu_dm", "sig_dm", "shape_dm"]
     mcmc: *default_mcmc
 simulations:
   m08_1k:
@@ -112,7 +112,7 @@ simulations:
       mu_dx: *mu_dx_1k
       min_depth: *min_depth
       max_depth: *max_depth
-      gamma: *gamma
+      frac_var: *frac_var
     pars: ["tilde_mu", "tilde_sig"]
   m09_2k:
     model: "m09"
@@ -121,7 +121,7 @@ simulations:
       mu_dx: *mu_dx_2k
       min_depth: *min_depth
       max_depth: *max_depth
-      gamma: *gamma
+      frac_var: *frac_var
     pars: ["tilde_mu", "tilde_sig"]
   m09_3k:
     model: "m09"
@@ -130,23 +130,23 @@ simulations:
       mu_dx: *mu_dx_3k
       min_depth: *min_depth
       max_depth: *max_depth
-      gamma: *gamma
+      frac_var: *frac_var
     pars: ["tilde_mu", "tilde_sig"]
   m10_1k:
-    model: "m10"
+    model: "m10_1k"
     sim_info:
       r: *rad
       mu_dx: *mu_dx_1k
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    pars: ["mu_dm", "sig_dm", "shape_dm"]
   m10_2k:
-    model: "m10"
+    model: "m10_2k"
     sim_info:
       r: *rad
       mu_dx: *mu_dx_2k
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    pars: ["mu_dm", "sig_dm", "shape_dm"]
   m10_3k:
-    model: "m10"
+    model: "m10_3k"
     sim_info:
       r: *rad
       mu_dx: *mu_dx_3k
-    keep_pars: ["mu_y", "sig_y", "shape_dm"]
+    pars: ["mu_dm", "sig_dm", "shape_dm"]
