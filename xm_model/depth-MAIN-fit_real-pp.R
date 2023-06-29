@@ -14,6 +14,7 @@ library("moments")
 config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 SIMS_TO_RUN = config$simulations_to_run
+SIMS_TO_RUN = c("m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k")
 SIMS_TO_RUN
 
 # Load
@@ -36,16 +37,16 @@ for (sim_name in SIMS_TO_RUN) {
   
   stan_sim_file = sprintf("depth-%s-sim.stan", model_config$stan_file_id)
 
-  # This should load samp
-  if (model_name %in% names(samp_list)) {
-    samp = samp_list[[model_name]]
-  } else {
-    samp_file = sprintf("%s-fit.RData", model_and_prior_name)
-    load(file=file.path("cache", samp_file))
-    samp_list[[model_name]] = samp
-  }
-
+  ## # This should load samp
+  ## if (model_name %in% names(samp_list)) {
+  ##   samp = samp_list[[model_name]]
+  ## } else {
+  ##   samp_list[[model_name]] = samp
+  ## }
   # samp = samp_list[[sim_name]]
+  
+  samp_file = sprintf("%s-fit.RData", model_name)
+  load(file=file.path("cache", samp_file))
   
   pars = sim_config$pars
 

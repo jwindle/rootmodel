@@ -5,9 +5,9 @@ mu_dx_1k: &mu_dx_1k 4.0
 mu_dx_2k: &mu_dx_2k 2.67
 mu_dx_3k: &mu_dx_3k 2.0
 frac_var: &frac_var 0.50
-write: False
+write: True
 models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k"]
-simulations_to_run: ["m08_1k", "m08_2k", "m08_3k"]
+simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k"]
 data_frac: 0.2
 crop: "Corn"
 mcmc: &default_mcmc

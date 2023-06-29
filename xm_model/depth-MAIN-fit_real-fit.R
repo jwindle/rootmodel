@@ -14,7 +14,7 @@ config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 # EPOCHS = config$epochs
 MODELS_TO_RUN = config$models_to_run
-MODELS_TO_RUN = "m10_1k"
+# MODELS_TO_RUN = "m10_1k"
 MODELS_TO_RUN
 
 USE = config$data_frac
