@@ -3,7 +3,6 @@
 data {
 	int<lower=1> N;              /* number of total observations       */
 	int<lower=1> M;              /* number of groups                   */
-	int<lower=1> T;              /* number of time steps               */
 	real<lower=0> mu_dx;         /* dx step size */
 	int<lower=1> K;              /* number of kinks                    */
 	real<lower=0> r;             /* radius at which a root is detected */
@@ -32,7 +31,7 @@ parameters {
 	real mu_dm[M];
 	real<lower=0> sig_dm[M];
 	real shape_dm[M];
-	vector[K] dm[N];
+	vector[K+1] dm[N];
 }
 transformed parameters {
 	real z[N];
@@ -67,7 +66,7 @@ generated quantities {
 	real mu_y[M];
 	real sig_y[M];
 	for (j in 1:M) {
-		mu_y[i] = mu_dm[i] * x_left_l1;
-		sig_y[i] = sig_dm[i] * x_left_l2
+		mu_y[j] = mu_dm[j] * x_left_l1;
+		sig_y[j] = sig_dm[j] * x_left_l2;
 	}
 }
