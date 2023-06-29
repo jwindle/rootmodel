@@ -114,6 +114,12 @@ file_helper <- function(dir, base, suffix) {
 }
 
 
+get_K <- function(r, mu_dx) {
+  K = ceiling(r / mu_dx) - 1
+  return(K)
+}
+
+
 downsample_depths <- function(depths, use=0.1) {
   # We want to use something non-random here to minimize sampling
   # variance and ensure a replicable result.  We return the index so
@@ -175,6 +181,7 @@ simulate_over_parameter_df <- function(model, param_df, base_data) {
   samp_list = list()
   for (i in 1:nr) {
     dat = c(base_data, as.list(param_df[i,]))
+    dat$K = with(dat, ceiling(r / mu_dx) - 1)
     samp_list[[i]] = sampling(model, data=dat, chains=1, iter=1, algorithm="Fixed_param")
   }
   return(samp_list)
@@ -207,17 +214,71 @@ make_depths_df <- function(depths_list, param_df) {
 }
 
 
-posterior_predictive <- function(model, par_array, base) {
+make_depths_plot <- function(depths_df, facet1, facet2) {
+
+  primary_cols = c("depth", facet1, facet2)
+  remaining_cols = setdiff(colnames(depths_df), primary_cols)
+
+  alt_depth_df = depths_df["depth"]
+  alt_depth_df[,"f1"] = depths_df[[facet1]]
+  alt_depth_df[,"f2"] = depths_df[[facet2]]
+  alt_depth_df[,"others"] = ""
+
+  remain_name = paste(remaining_cols, collapse=",")
+  n_remain = length(remaining_cols)
+  
+  if (n_remain == 1) {
+    alt_depth_df[["others"]] = depths_df[,remaining_cols[1]]
+  } else if (n_remain > 1) {
+    alt_depth_df[["others"]] = apply(depths_df[,remaining_cols], 1, paste, collapse=",")
+  }
+  
+  p_y_all = alt_depth_df %>%
+    ggplot() +
+    geom_histogram(
+      aes(x=depth, y=..density.., fill=as.factor(others)),
+      bins=10,
+      # position="identity",
+      alpha=1.0
+    ) +
+    facet_grid(col=vars(f1), row=vars(f2)) +
+    xlab("depth (cm)") +
+    ggtitle(sprintf("Distribution of depths %s, %s", facet1, facet2)) +
+    guides(fill=guide_legend(title=remain_name)) +
+    coord_flip() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  
+  return(p_y_all)
+}
+
+
+posterior_predictive_depths <- function(model, par_array, base) {
   # Extract par_array here?
   ndim = length(dim(par_array))
   Y = apply(par_array, 1:(ndim-1), function(x){
     datx = c(base, as.list(x))
-    out = sampling(model, dat=datx, algorithm="Fixed_param", iter=1, chains=1)
+    out = sampling(model, dat=datx, algorithm="Fixed_param", iter=1, chains=1, refresh=0)
     return(extract(out, "y")[[1]])
   })
   return(Y)
 }
 
+posterior_predictive_paths <- function(model, par_array, base) {
+  # Extract par_array here?
+  ndim = length(dim(par_array))
+  P = apply(par_array, 1:(ndim-1), simplify=TRUE, function(x){
+    datx = c(base, as.list(x))
+    out = sampling(model, dat=datx, algorithm="Fixed_param", iter=1, chains=1, refresh=0)
+    paths = extract(out, "path")[[1]][1,,]
+    return(paths)
+  })
+  P_dim = dim(P)
+  if (with(base, N*(K+1) != P_dim[1])) {
+    print("MISMATCH OF EXPECTED DIMENSIONS IN PATH")
+  }
+  P_array = array(as.numeric(P), dim=with(base, c(N, K+1, P_dim[-1])))
+  return(P_array)
+}
 
 discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
   df_list = list()
@@ -234,3 +295,28 @@ discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
   df$depth_bin = cut(df$depth_cm, breaks=depth_breaks, include.lowest=TRUE, ordered_result=TRUE)
   return(df)
 }
+
+discretized_depth_distribution_2 <- function(paths, depth_breaks, epoch_levels) {
+  df_list = list()
+  dim_paths = dim(paths)
+  n_steps = dim_paths[2]
+  n_epochs = dim_paths[length(dim_paths)]
+  # depths_first = paths[,1,,,drop=TRUE]
+  depths_high = apply(paths, c(1, 3, 4), max)
+  depths_final = paths[,n_steps,,,drop=TRUE]
+  depths_high_matrix = matrix(as.numeric(depths_high), ncol=n_epochs, byrow=FALSE)
+  depths_final_matrix = matrix(as.numeric(depths_final), ncol=n_epochs, byrow=FALSE)
+  for (i in 1:n_epochs) {
+    df_list[[i]] = data.frame(
+      shallowest_cm = depths_high_matrix[,i],
+      depth_cm = depths_final_matrix[,i]
+    )
+    df_list[[i]]$epoch = i
+  }
+  df = do.call(rbind, df_list)
+  df$epoch = as.ordered(df$epoch)
+  levels(df$epoch) = epoch_levels
+  df$depth_bin = cut(df$depth_cm, breaks=depth_breaks, include.lowest=TRUE, ordered_result=TRUE)
+  return(df)
+}
+
