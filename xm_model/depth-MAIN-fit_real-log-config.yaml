@@ -11,14 +11,14 @@ write: True
 models_to_run: ["m14"]
 # simulations_to_run: ["m14_3k"]
 # models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14"]
-simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k"]
+simulations_to_run: ["m10_3k", "m14_1k", "m14_2k", "m14_3k"]
 data_frac: 1.0
 crop: "Corn"
 mcmc: &default_mcmc
   iter: 6000
   warmup: 3000
-  chains: 1
-  cores: 1
+  chains: 6
+  cores: 6
 models:
   m08:
     stan_file_id: "m08"
@@ -103,6 +103,7 @@ models:
       shape_dm_prior_mean: 0.0
       shape_dm_prior_std: 4
     keep_pars: ["mu_y", "sig_y", "mu_dm", "sig_dm", "shape_dm"]
+    mcmc: *default_mcmc
   m14:
     stan_file_id: "m08"
     transform:
@@ -139,17 +140,17 @@ simulations:
     model: "m09"
     sim_info:
       mu_dx: *mu_dx_3k
-    pars: ["mu_y", "sig_y"]
+    pars: ["tilde_mu", "tilde_sig"]
   m09_2k:
     model: "m09"
     sim_info:
       mu_dx: *mu_dx_3k
-    pars: ["mu_y", "sig_y"]
+    pars: ["tilde_mu", "tilde_sig"]
   m09_3k:
     model: "m09"
     sim_info:
       mu_dx: *mu_dx_3k
-    pars: ["mu_y", "sig_y"]
+    pars: ["tilde_mu", "tilde_sig"]
   m10_1k:
     model: "m10_1k"
     sim_info:
