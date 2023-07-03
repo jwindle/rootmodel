@@ -11,7 +11,7 @@ write: True
 models_to_run: ["m14"]
 # simulations_to_run: ["m14_3k"]
 # models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14"]
-simulations_to_run: ["m10_3k", "m14_1k", "m14_2k", "m14_3k"]
+simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k"]
 data_frac: 1.0
 crop: "Corn"
 mcmc: &default_mcmc
@@ -124,12 +124,12 @@ simulations:
   m08_1k:
     model: "m08"
     sim_info:
-      mu_dx: *mu_dx_3k
+      mu_dx: *mu_dx_1k
     pars: ["mu_y", "sig_y"]
   m08_2k:
     model: "m08"
     sim_info:
-      mu_dx: *mu_dx_3k
+      mu_dx: *mu_dx_2k
     pars: ["mu_y", "sig_y"]
   m08_3k:
     model: "m08"
@@ -139,12 +139,12 @@ simulations:
   m09_1k:
     model: "m09"
     sim_info:
-      mu_dx: *mu_dx_3k
+      mu_dx: *mu_dx_1k
     pars: ["tilde_mu", "tilde_sig"]
   m09_2k:
     model: "m09"
     sim_info:
-      mu_dx: *mu_dx_3k
+      mu_dx: *mu_dx_2k
     pars: ["tilde_mu", "tilde_sig"]
   m09_3k:
     model: "m09"
