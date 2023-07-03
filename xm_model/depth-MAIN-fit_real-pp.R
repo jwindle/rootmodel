@@ -68,7 +68,7 @@ for (sim_name in SIMS_TO_RUN) {
   ##   chains=1
   ## )
 
-  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=1)),,]
+  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=10)),,]
   
   sim_paths = posterior_predictive_paths(
     sim_model,
