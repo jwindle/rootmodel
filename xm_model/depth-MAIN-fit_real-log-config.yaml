@@ -15,8 +15,8 @@ simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k",
 data_frac: 1.0
 crop: "Corn"
 mcmc: &default_mcmc
-  iter: 800
-  warmup: 400
+  iter: 6000
+  warmup: 3000
   chains: 1
   cores: 1
 models:
