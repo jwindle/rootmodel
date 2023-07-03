@@ -51,13 +51,12 @@ for (model_name in MODELS_TO_RUN) {
 
   model_config = config$models[[model_name]]
   
-  prior_info = model_config$prior_info
-  if ("mu_dx" %in% names(prior_info)) {
-    prior_info$K = with(prior_info, get_K(r, mu_dx))
+  constants = model_config$constants
+  if ("mu_dx" %in% names(constants)) {
+    constants$K = with(constants, get_K(r, mu_dx))
   }
-  if (!("offset" %in% names(model_config))) {
-    model_config$offset = 0.
-  }
+  prior = model_config$prior
+
 
   # Stan files
   stan_fit_file = sprintf("depth-%s-fit.stan", model_config$stan_file_id)
@@ -69,14 +68,14 @@ for (model_name in MODELS_TO_RUN) {
     M = M,
     group = group
   )
-  dat = c(dat_i, prior_info)
+  dat = c(constants, prior, dat_i)
   # datenv = list2env(dat)
 
   # Transforms, if needed
-  if (model_config$log_transform) {
+  if (model_config$transform$log_transform) {
     dat$y = log(-dat$y)
   }
-  dat$y = dat$y - model_config$offset
+  dat$y = dat$y - model_config$transform$offset
 
   # Simulate
   mcmc_config = model_config$mcmc
@@ -126,10 +125,8 @@ for (model_name in MODELS_TO_RUN) {
   # traceplot(samp, pars=pars)
 
   if (config$write) {
-    
     samp_file = sprintf("%s-fit.RData", model_name)
     save(samp, file=file.path("cache", samp_file))
-    
   }
 
 }
