@@ -1,5 +1,9 @@
 # -*- ess-style: RStudio; -*-
 
+source("shared/functions.R")
+
+library("moments")
+
 
 # Make data used for fitting models.
 
