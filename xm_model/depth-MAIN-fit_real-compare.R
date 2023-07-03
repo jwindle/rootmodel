@@ -1,16 +1,17 @@
 # -*- ess-style: RStudio; -*-
 
+# MUST SET STARTING POINT FOR LOG TRANSFORM
+
 source("shared/functions.R")
 
 library("rstan")
 library("bayesplot")
 library("yaml")
-library("moments")
 
 library("gridExtra")
 
 
-config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
+config = read_yaml("xm_model/depth-MAIN-fit_real-log-config.yaml")
 
 SIMS_TO_RUN = config$simulations_to_run
 
@@ -30,7 +31,7 @@ for (sim_name in SIMS_TO_RUN) {
   paths_file = sprintf("%s-paths.RData", sim_name)
   load(file=file.path("cache", paths_file))
 
-  frac_positive_list[[sim_name]] = simulated_depths_df %>%
+  frac_positive_list[[sim_name]] = sim_depths_df %>%
     group_by(epoch) %>%
     summarize(
       frac_pos = mean(shallowest_cm > 1.0)
@@ -40,7 +41,7 @@ for (sim_name in SIMS_TO_RUN) {
   threshes = c(1., Inf)
   temp_list = list()
   for (i in 1:2) {
-    temp_list[[i]] = simulated_depths_df %>%
+    temp_list[[i]] = sim_depths_df %>%
       filter(shallowest_cm < threshes[i]) %>% # Eliminate unrealistic paths
       group_by(epoch, depth_bin) %>%
       summarize(n = n()) %>%

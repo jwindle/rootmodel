@@ -3,8 +3,8 @@ data {
 	int<lower=1> N;
 	int<lower=1> M;
 	real<lower=0> r;
-	real <upper=0.0> min_depth;
-	real <upper=0.0> max_depth;
+	real min_depth;
+	real <lower=min_depth> max_depth;
 	real mu_y_prior_mean;
 	real mu_y_prior_std;
 	real sig_y_prior_mean;

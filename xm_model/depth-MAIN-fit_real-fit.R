@@ -10,7 +10,7 @@ library("moments")
 
 
 # CONFIG
-config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
+config = read_yaml("xm_model/depth-MAIN-fit_real-log-config.yaml")
 
 # EPOCHS = config$epochs
 MODELS_TO_RUN = config$models_to_run
@@ -56,6 +56,9 @@ for (model_name in MODELS_TO_RUN) {
   if ("mu_dx" %in% names(prior_info)) {
     prior_info$K = with(prior_info, get_K(r, mu_dx))
   }
+  if (!("offset" %in% names(model_config))) {
+    model_config$offset = 0.
+  }
 
   # Stan files
   stan_fit_file = sprintf("depth-%s-fit.stan", model_config$stan_file_id)
@@ -70,10 +73,16 @@ for (model_name in MODELS_TO_RUN) {
   dat = c(dat_i, prior_info)
   # datenv = list2env(dat)
 
+  # Transforms, if needed
+  if (model_config$log_transform) {
+    dat$y = log(-dat$y)
+  }
+  dat$y = dat$y - model_config$offset
+
+  # Simulate
   mcmc_config = model_config$mcmc
   pars = model_config$keep_pars
-  
-  # Simulate
+
   samp = stan(
     file.path("xm_model", stan_fit_file),
     data = dat,
