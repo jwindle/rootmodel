@@ -320,3 +320,77 @@ discretized_depth_distribution_2 <- function(paths, depth_breaks, epoch_levels) 
   return(df)
 }
 
+
+discretized_depth_distribution_3 <- function(refined_paths, depth_breaks, epoch_levels) {
+  df_list = list()
+  paths = refined_paths
+  dim_paths = dim(paths)
+  n_epochs = dim_paths[3]
+  # depths_first = paths[,1,,,drop=TRUE]
+  depths_high = apply(paths, c(1, 3), max)
+  depths_final = paths[,dim_paths[2],]
+  depths_high_matrix = matrix(as.numeric(depths_high), ncol=n_epochs, byrow=FALSE)
+  depths_final_matrix = matrix(as.numeric(depths_final), ncol=n_epochs, byrow=FALSE)
+  for (i in 1:n_epochs) {
+    df_list[[i]] = data.frame(
+      shallowest_cm = depths_high_matrix[,i],
+      depth_cm = depths_final_matrix[,i]
+    )
+    df_list[[i]]$epoch = i
+  }
+  df = do.call(rbind, df_list)
+  df$epoch = as.ordered(df$epoch)
+  levels(df$epoch) = epoch_levels
+  df$depth_bin = cut(df$depth_cm, breaks=depth_breaks, include.lowest=TRUE, ordered_result=TRUE)
+  return(df)
+}
+
+
+log_transform <- function(y, y0) {
+  return(log(-(y - y0)))
+}
+
+
+inv_log_transform <- function(x, y0) {
+  return(y0 - exp(x))
+}
+
+
+refine_paths <- function(paths, mu_dx, n, transform) {
+  # Assuming we are on an equally spaced grid
+
+  paths_t = aperm(paths, c(3, 1, 2, 4))
+  paths_t_dim = dim(paths_t)
+  n_epoch = paths_t_dim[4]
+  Kp1 = paths_t_dim[3]
+
+  EP_list = list()
+  for (i in 1:n_epoch) {
+    P = cbind(
+      0.0,
+      matrix(
+        paths_t[,,,i],
+        nrow=prod(paths_t_dim[1:2]),
+        ncol=paths_t_dim[3],
+        byrow=FALSE
+      )
+    )
+    Y0 = P[,1:Kp1,drop=FALSE]
+    DY = P[,2:(Kp1+1),drop=FALSE] - Y0
+    one = rep(1, n)
+    delta = mu_dx * seq(1, n, length.out=n) / n
+    expanded_paths = aperm(outer(DY, delta) / mu_dx + outer(Y0, one), c(1, 3, 2))
+    expanded_paths_dim = dim(expanded_paths)
+    EP = matrix(expanded_paths, nrow=expanded_paths_dim[1], byrow=FALSE)
+    EP_list[[i]] = EP
+  }
+  
+  EP_array = simplify2array(EP_list)
+
+  EP_array = EP_array + transform$offset
+  if (transform$log_transform) {
+    EP_array = -1. * exp(EP_array)
+  }
+  
+  return(EP_array)
+}
