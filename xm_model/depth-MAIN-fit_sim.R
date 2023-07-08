@@ -1,40 +1,33 @@
 # -*- ess-style: RStudio; -*-
 
-source("../shared/functions.R")
+source("shared/functions.R")
 
 library("rstan")
 library("bayesplot")
 library("yaml")
 
 
-MODELS_TO_RUN = c(2, 5, 6)
-
-USE = 0.1
-ITER = 800
-WARMUP = 400
-CHAINS = 1
-CORES = 1
+config = read_yaml("xm_model/depth-MAIN-fit_sim.yaml")
 
 
-config = read_yaml("depth-MAIN-fit_sim.yaml")
-
-fit_config = config[["prior_data"]]
-
-pars_of_interest = list()
-pars_of_interest[[2]] = c("mu_dm", "sig_dm")
-pars_of_interest[[5]] = c("mu_dm", "sig_dm", "shape_dm")
-pars_of_interest[[6]] = c("mu_dm", "sig_dm")
+USE = config$use
+ITER = config$mcmc$iter
+WARMUP = config$mcmc$warmup
+CHAINS = config$mcmc$chains
+CORES = config$mcmc$cores
 
 
 # SESSION_ID = "b7f0512c-f0d6-11ed-af6b-8c8590d39d9a"
 # SESSION_ID = "e0236604-f0fc-11ed-ab75-8c8590d39d9a"
 SESSION_ID = "TEST"
 
-for (model_num in MODELS_TO_RUN) {
+for (model_name in MODELS_TO_RUN) {
+
+  fit_config = config$models[[model_name]]
   
   # Stan files
-  stan_fit_file = sprintf("depth-m%02d-fit.stan", model_num)
-  load_file = file.path("..", "data", sprintf("%s-m%02d-sim.RData", SESSION_ID, model_num))
+  stan_fit_file = file.path("xm_model", sprintf("depth-%s-fit.stan", model_name))
+  load_file = file.path("data", sprintf("%s-%s-sim.RData", SESSION_ID, model_name))
 
   # Load data
   if (!file.exists(load_file)) {
@@ -45,10 +38,14 @@ for (model_num in MODELS_TO_RUN) {
   
   rand_idx = sample(1:nrow(param_df), size=1, replace=FALSE)
 
+  param_df[rand_idx,]
+
   depths_ds = downsample_depths(depth_list[[rand_idx]], use=USE)
   
   y_data = depths_ds$depth
   N = length(y_data)
+
+  hist(y_data)
   
   # Param
   dat_i = list(
@@ -59,7 +56,7 @@ for (model_num in MODELS_TO_RUN) {
     mu_dx = param_df$mu_dx[rand_idx],
     K = param_df$K[rand_idx]
   )
-  dat = c(dat_i, fit_config[[model_num]])
+  dat = c(dat_i, fit_config$prior)
   # datenv = list2env(dat)
   
   # Simulate
@@ -72,33 +69,37 @@ for (model_num in MODELS_TO_RUN) {
     warmup = WARMUP,
     init_r = 1,
     control = list(max_treedepth=10),
-    verbose = FALSE,
-    model_name = sprintf("depth-fit-m%02d", model_num)
+    verbose = TRUE,
+    model_name = sprintf("depth-fit-%s", model_name)
   )
 
+  param_df[rand_idx,]
+  
   # Summary
-  pars = pars_of_interest[[model_num]]
+  pars = fit_config$pars
+  
   print(summary(samp, pars))
 
+  # Stan versions of plotting routines
+  pairs(samp, pars=pars)
+
+  traceplot(samp, pars=pars)
+
   # Plot
-  # pars = c("mu_dm", "sig_dm")
   param = as.numeric(param_df[rand_idx, pars])
   samp_array = extract(samp, pars, permute=FALSE)
 
-  p_hist = mcmc_recover_hist(samp_array, param) + ggtitle(sprintf("Posteriors M%02d", model_num))
+  p_hist = mcmc_recover_hist(samp_array, param) + ggtitle(sprintf("Posteriors %s", model_name))
   p_hist
 
-  p_hist_file = sprintf("%s-m%02d-p_hist.png", SESSION_ID, model_num)
+  p_hist_file = sprintf("%s-%s-p_hist.png", SESSION_ID, model_name)
   ggsave(p_hist, file=file.path("..", "images", "xm_model", p_hist_file))
 
-  p_pairs = mcmc_pairs(samp_array, grid_args = list(top=sprintf("Pairs M%02d", model_num)))
+  p_pairs = mcmc_pairs(samp_array, grid_args = list(top=sprintf("Pairs %s", model_name)))
   p_pairs
 
-  p_pairs_file = sprintf("%s-m%02d-p_pairs.png", SESSION_ID, model_num)
+  p_pairs_file = sprintf("%s-%s-p_pairs.png", SESSION_ID, model_name)
   ggsave(p_pairs, file=file.path("..", "images", "xm_model", p_pairs_file))
 
-  # # Stan versions of plotting routines
-  # pairs(samp, pars=pars)
-  # traceplot(samp, pars=pars)
 
 }

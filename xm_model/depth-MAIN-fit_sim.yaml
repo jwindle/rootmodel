@@ -1,31 +1,71 @@
 rad: &rad 8.0
 min_depth: &min_depth -16.32
 max_depth: &max_depth -2.32
-prior_data:
-  -
-  -
-    r: *rad
-    min_depth: *min_depth
-    max_depth: *max_depth
-    mu_dm_prior_mean: -0.5
-    mu_dm_prior_std: 0.5
-    sig_dm_prior_mean: 0.3
-    sig_dm_prior_std: 0.3
-  -
-  -
-  -
-    r: *rad
-    mu_dm_prior_mean: -0.5
-    mu_dm_prior_std: 0.5
-    sig_dm_prior_mean: 0.3
-    sig_dm_prior_std: 0.3
-    shape_dm_prior_mean: 0.0
-    shape_dm_prior_std: 4
-  -
-    r: *rad
-    min_depth: *min_depth
-    max_depth: *max_depth
-    mu_dm_prior_mean: -0.5
-    mu_dm_prior_std: 0.5
-    sig_dm_prior_mean: 0.3
-    sig_dm_prior_std: 0.3
+min_angle: &min_angle -1.2
+max_angle: &max_angle -0.1
+use: 1.0
+models_to_run: ["m20"]
+mcmc:
+  iter: 2000
+  warmup: 1000
+  chains: 2
+  cores: 2
+models:
+  m02:
+    prior:
+      r: *rad
+      min_depth: *min_depth
+      max_depth: *max_depth
+      mu_dm_prior_mean: -0.5
+      mu_dm_prior_std: 0.5
+      sig_dm_prior_mean: 0.3
+      sig_dm_prior_std: 0.3
+    pars: ["mu_dm", "sig_dm"]
+  m05:
+    prior:
+      r: *rad
+      mu_dm_prior_mean: -0.5
+      mu_dm_prior_std: 0.5
+      sig_dm_prior_mean: 0.3
+      sig_dm_prior_std: 0.3
+      shape_dm_prior_mean: 0.0
+      shape_dm_prior_std: 4
+    pars: ["mu_dm", "sig_dm", "shape_dm"]
+  m06:
+    prior:
+      r: *rad
+      min_depth: *min_depth
+      max_depth: *max_depth
+      mu_dm_prior_mean: -0.5
+      mu_dm_prior_std: 0.5
+      sig_dm_prior_mean: 0.3
+      sig_dm_prior_std: 0.3
+    pars: ["mu_dm", "sig_dm"]
+  m19:
+    prior:
+      r: *rad
+      min_angle: *min_angle
+      max_angle: *max_angle
+      alpha: 0.5
+      mu_dxi_mean: -5.
+      mu_dxi_std: 3.
+      sig_dxi_mean: 1.
+      sig_dxi_std: 2.
+      xi_start_mean: 4.5
+      xi_start_std: 0.1
+    pars: ["mu_dxi", "sig_dxi", "xi_start"]
+  m20:
+    prior:
+      r: *rad
+      min_angle: *min_angle
+      max_angle: *max_angle
+      alpha: 0.5
+      mu_yp_mean: -9.
+      mu_yp_std: 4.
+      sig_yp_mean: 5.
+      sig_yp_std: 5.
+      xi_start_mean: 2.
+      xi_start_std: 0.1
+    pars: ["mu_yp", "sig_yp", "xi_start"]
+    
+    
