@@ -4,6 +4,9 @@ functions {
 		/* From the Stan user guide */
 		real p_lb = normal_cdf(lb, mu, sigma);
 		real p_ub = normal_cdf(ub, mu, sigma);
+		if (p_lb == 1) {
+			return mu;
+		}
 		real u = uniform_rng(p_lb, p_ub);
 		real y = mu + sigma * inv_Phi(u);
 		return y;
