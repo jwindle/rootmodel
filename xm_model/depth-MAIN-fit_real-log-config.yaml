@@ -3,22 +3,28 @@ min_depth: &min_depth -16.32
 max_depth: &max_depth -2.43
 log_min: &log_min 0.88
 log_max: &log_max 2.8
+min_depth_2: &min_depth_2 -24.
+max_depth_2: &max_depth_2 -1.
+log_min_2: &log_min_2 0.0
+log_max_2: &log_max_2 3.18
+min_angle: &min_angle -1.11478
+max_angle: &max_angle -0.2
 mu_dx_1k: &mu_dx_1k 4.0
 mu_dx_2k: &mu_dx_2k 2.67
 mu_dx_3k: &mu_dx_3k 2.0
-frac_var: &frac_var 0.50
+frac_var: &frac_var 0.9
 write: True
-models_to_run: ["m14"]
-# simulations_to_run: ["m14_3k"]
+models_to_run: ["m20_1k"]
+simulations_to_run: ["m20_1k"]
 # models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14"]
-simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k"]
+# simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m15_1k", "m15_2k", "m15_3k", "m18_1k", "m18_2k", "m18_3k"]
 data_frac: 1.0
 crop: "Corn"
 mcmc: &default_mcmc
-  iter: 6000
-  warmup: 3000
-  chains: 6
-  cores: 6
+  iter: 800
+  warmup: 400
+  chains: 2
+  cores: 2
 models:
   m08:
     stan_file_id: "m08"
@@ -120,6 +126,25 @@ models:
       sig_y_prior_std: 2.
     keep_pars: ["mu_y", "sig_y"]
     mcmc: *default_mcmc
+  m20_1k:
+    stan_file_id: "m20"
+    transform:
+      log_transform: False
+      offset: 0
+    constants:
+      r: *rad
+      min_angle: *min_angle
+      max_angle: *max_angle
+      mu_dx: *mu_dx_1k
+    prior:
+      mu_yp_mean: 9.
+      mu_yp_std: 3.
+      sig_yp_mean: 5.
+      sig_yp_std: 3.
+      xi_start_mean: 1.75
+      xi_start_std: 0.01
+    keep_pars: ["mu_yp", "sig_yp", "xi_start"]
+    mcmc: *default_mcmc
 simulations:
   m08_1k:
     model: "m08"
@@ -178,3 +203,49 @@ simulations:
     sim_info:
       mu_dx: *mu_dx_3k
     pars: ["mu_y", "sig_y"]
+  m15_1k:
+    model: "m08"
+    sim_info:
+      mu_dx: *mu_dx_1k
+      min_depth: *min_depth_2
+      max_depth: *max_depth_2
+    pars: ["mu_y", "sig_y"]
+  m15_2k:
+    model: "m08"
+    sim_info:
+      mu_dx: *mu_dx_2k
+      min_depth: *min_depth_2
+      max_depth: *max_depth_2
+    pars: ["mu_y", "sig_y"]
+  m15_3k:
+    model: "m08"
+    sim_info:
+      mu_dx: *mu_dx_3k
+      min_depth: *min_depth_2
+      max_depth: *max_depth_2
+    pars: ["mu_y", "sig_y"]
+  m18_1k:
+    model: "m14"
+    sim_info:
+      mu_dx: *mu_dx_1k
+      min_depth: *log_min_2
+      max_depth: *log_max_2
+    pars: ["mu_y", "sig_y"]
+  m18_2k:
+    model: "m14"
+    sim_info:
+      mu_dx: *mu_dx_2k
+      min_depth: *log_min_2
+      max_depth: *log_max_2
+    pars: ["mu_y", "sig_y"]
+  m18_3k:
+    model: "m14"
+    sim_info:
+      mu_dx: *mu_dx_3k
+      min_depth: *log_min_2
+      max_depth: *log_max_2
+    pars: ["mu_y", "sig_y"]
+  m20_1k:
+    model: "m20_1k"
+    sim_info:
+    pars: ["mu_yp", "sig_yp", "xi_start"]
