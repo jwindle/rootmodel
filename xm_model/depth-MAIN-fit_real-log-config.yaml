@@ -135,6 +135,8 @@ models:
       r: *rad
       min_angle: *min_angle
       max_angle: *max_angle
+      lba: *min_angle
+      uba: *max_angle
       mu_dx: *mu_dx_1k
     prior:
       mu_yp_mean: 9.
