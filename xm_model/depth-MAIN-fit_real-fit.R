@@ -101,9 +101,13 @@ for (model_name in MODELS_TO_RUN) {
   # Summary
   print(summary(samp, pars))
 
+  # # Stan versions of plotting routines
+  pairs(samp, pars=pars)
+  # traceplot(samp, pars=pars)
+  
   # Plot
   samp_array = extract(samp, pars, permute=FALSE)
-
+  
   p_hist = mcmc_hist(samp_array) + ggtitle(sprintf("Posteriors model %s", model_name))
   p_hist
 
@@ -120,9 +124,6 @@ for (model_name in MODELS_TO_RUN) {
   ##   ggsave(p_pairs, file=file.path("..", "images", "xm_model", p_pairs_file))
   ## }
 
-  # # Stan versions of plotting routines
-  # pairs(samp, pars=pars)
-  # traceplot(samp, pars=pars)
 
   if (config$write) {
     samp_file = sprintf("%s-fit.RData", model_name)
