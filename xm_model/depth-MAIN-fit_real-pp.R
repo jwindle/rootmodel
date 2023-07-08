@@ -33,9 +33,9 @@ for (sim_name in SIMS_TO_RUN) {
     list(
       N = 10
     ),
-    model_config$constants,
-    sim_config$sim_info
+    model_config$constants
   )
+  base_dat = replace(base_dat, names(sim_config$sim_info), sim_config$sim_info)
 
   base_dat$K = with(base_dat, get_K(r, mu_dx))
 
@@ -55,21 +55,21 @@ for (sim_name in SIMS_TO_RUN) {
   load(file=file.path("cache", samp_file))
   
   pars = sim_config$pars
-
+  
   samp_array_2 = simplify2array(extract(samp, pars))
 
+  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=10)),,]
+  
   sim_model = stan_model(file.path("xm_model", stan_sim_file), verbose=FALSE)
-
+  
   ## temp_test = sampling(
   ##   sim_model,
-  ##   data=c(base_dat, as.list(samp_array_2[1,1,])),
+  ##   data=c(base_dat, as.list(samp_array_sub[1,1,])),
   ##   algorithm="Fixed_param",
   ##   iter=1,
   ##   chains=1
   ## )
 
-  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=10)),,]
-  
   sim_paths = posterior_predictive_paths(
     sim_model,
     samp_array_sub,
