@@ -86,8 +86,9 @@ for (sim_name in SIMS_TO_RUN) {
     col = "#80808040"
     path_idc = floor(seq(1, d[1], length.out = PATHS_TO_PLOT))
 
-    png(file.path("images", "xm_model", sprintf("%s-paths.png", sim_name)))
-    par(mfrow=c(2,2))
+    png(file.path("images", "xm_model", sprintf("%s-paths.png", sim_name)), width=700, height=400, units="px")
+    
+    par(mfrow=c(1,4))
     for (i in 1:4) {
       jj = path_idc[1]
       plot_title = sprintf("Paths epoch %d", i)
@@ -96,7 +97,14 @@ for (sim_name in SIMS_TO_RUN) {
         jj = path_idc[j]
         lines(x_grid, sim_paths_refined[jj,,i], col=col)
       }
+      mtext(
+        sim_name,
+        side = 3,
+        line = - 2,
+        outer = TRUE
+      )
     }
+    
     dev.off()
 
   }
@@ -104,7 +112,8 @@ for (sim_name in SIMS_TO_RUN) {
 }
 
 
-# Summarize differences
+
+# COMPARE BY TABLES
 
 frac_pos_df = do.call(rbind, frac_positive_list)
 frac_pos_df
@@ -143,18 +152,40 @@ df_comp_summary_summary = df_comp_summary %>%
     mkl = mean(kl)
   )
 
-print(df_comp_summary_summary, n=30)
+print(df_comp_summary_summary, n=40)
 
 
 if (config$write) {
-  comp_summary_file = sprintf("fit_real-comp_summary.csv")
-  write.csv(df_comp_summary, file=file.path("cache", comp_summary_file))
-  summary_summary_file = sprintf("fit_real-comp_summary-summary.csv")
-  write.csv(df_comp_summary_summary, file=file.path("cache", summary_summary_file))
-  frac_pos_file = sprintf("frac_pos-summary.csv")
-  write.csv(frac_pos_df, file=file.path("cache", frac_pos_file))
+
+  comp_summary_file = file.path("cache", "fit_real-comp_summary.%s")
+  comp_sum_sum_file = file.path("cache", "fit_real-comp_sum_sum.%s")
+  frac_pos_file = file.path("cache", "fit_real-frac_pos.%s")
+
+  write.csv(df_comp_summary, file=sprintf(comp_summary_file, "csv"))
+  print(
+    xtable(df_comp_summary, digits=3),
+    include.rownames=FALSE,
+    file=sprintf(comp_summary_file, "tex")
+  )  
+
+  write.csv(df_comp_summary_summary, file=sprintf(comp_sum_sum_file, "csv"))
+  print(
+    xtable(df_comp_summary_summary, digits=3),
+    include.rownames=FALSE,
+    file=sprintf(comp_sum_sum_file, "tex")
+  )
+  
+  write.csv(frac_pos_df, file=sprintf(frac_pos_file, "csv"))
+  print(
+    xtable(frac_pos_df, digits=3),
+    include.rownames=FALSE,
+    file=sprintf(frac_pos_file, "tex")
+  )
+
 }
 
+
+# COMPARE BY PLOTS
 
 p_comp_prop_no_thresh = df_comp %>%
   filter(thresh == Inf) %>%
@@ -179,12 +210,12 @@ p_comp_prop_thresh = df_comp %>%
 
 p_comp_prop_thresh
 
-grid.arrange(p_comp_prop_no_thresh, p_comp_prop_thresh)
+# grid.arrange(p_comp_prop_no_thresh, p_comp_prop_thresh)
 
 
 if (config$write) {
   p_comp_no_thresh_file = sprintf("fit_real-p_comp_prop-no_thresh.png")
   ggsave(p_comp_prop_no_thresh, file=file.path("images", "xm_model", p_comp_no_thresh_file))
-  p_comp_thresh_file = sprintf("fit_real-p_comp_prop-tresh.png")
+  p_comp_thresh_file = sprintf("fit_real-p_comp_prop-thresh.png")
   ggsave(p_comp_prop_thresh, file=file.path("images", "xm_model", p_comp_thresh_file))
 }
