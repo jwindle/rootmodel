@@ -1,12 +1,14 @@
-"N": &nsamp 100
+"N": &nsamp 200
 rad: &rad 8.0
 min_depth: &min_depth -16.32
 max_depth: &max_depth -2.30
+min_angle: &min_angle -1.2
+max_angle: &max_angle -0.1
 mu_dx: &mu_dx [2.0, 2.66666666666667, 4.0]
 K: &K [3, 2, 1]
+models_to_run: ["m20"]
 stan_data:
-  -
-  -
+  m02:
     "N": *nsamp
     r: *rad
     min_depth: *min_depth
@@ -19,11 +21,9 @@ stan_data:
       from: 0.1
       to: 0.4
       'length.out': 3
-    mu_dx: *mu_dx
+    # mu_dx: *mu_dx
     K: *K
-  -
-  -
-  -
+  m05:
     "N": *nsamp
     r: *rad
     mu_dm:
@@ -38,9 +38,9 @@ stan_data:
       from: -1.0
       to: -0.1
       'length.out': 3
-    mu_dx: *mu_dx
+    # mu_dx: *mu_dx
     K: *K
-  -
+  m06:
     "N": *nsamp
     r: *rad
     min_depth: *min_depth
@@ -53,5 +53,65 @@ stan_data:
       from: 0.1
       to: 0.4
       'length.out': 3
-    mu_dx: *mu_dx
+    # mu_dx: *mu_dx
+    K: *K
+  m08:
+    "N": *nsamp
+    r: *rad
+    min_depth: *min_depth
+    max_depth: *max_depth
+    mu_y:
+      from: -20.
+      to: -1.
+      'length.out': 5
+    sig_y:
+      from: 3.
+      to: 9
+      'length.out': 3
+    # mu_dx: *mu_dx
+    K: *K
+  m19:
+    "N": *nsamp
+    r: *rad
+    min_angle: -1.2
+    max_angle: -.1
+    theta_start: -.15
+    alpha: 0.5
+    mu_dxi:
+      from: -7.
+      to: -1.
+      'length.out': 4
+    sig_dxi:
+      from: 1.
+      to: 2.
+      'length.out': 3
+    # mu_dx: *mu_dx
+    K: *K
+  m20:
+    "N": *nsamp
+    r: *rad
+    lba: *min_angle
+    uba: *max_angle
+    #lba:
+    #  from: *min_angle
+    #  to: *min_angle
+    #  'length.out': 1
+    #uba:
+    #  from: *max_angle
+    #  to: *max_angle
+    #  'length.out': 1
+    # theta_start: -.23
+    xi_start:
+      from: 2.
+      to: 2.
+      'length.out': 1
+    mu_yp:
+      from: -24.
+      to: -4.
+      'length.out': 5
+    sig_yp:
+      from: 3.
+      to: 7.
+      'length.out': 3
+    # mu_dx: *mu_dx
     K: *K
