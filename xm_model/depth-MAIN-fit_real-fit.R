@@ -28,14 +28,11 @@ load(file.path("cache", "detections.RData"))
 
 head(df_all)
 
+
 # Sample (for testing routines)
 depths_df = df_all %>%
   filter(count > 0, crop == CROP) %>%
   slice_sample(prop=USE, replace=FALSE)
-
-## # Or sample from epoch
-## depths_df = df_all %>%
-##   filter(count > 0, epoch_group == 2)
 
 # Get data for Stan
 y_data = depths_df$depth_cm
@@ -44,8 +41,16 @@ N = length(y_data)
 M = length(levels(depths_df$epoch))
 
 
+## # Or sample from epoch
+## depths_df = df_all %>%
+##   filter(count > 0, epoch_group == 2, crop == CROP)
+## y_data = depths_df$depth_cm
+## N = nrow(depths_df)
+## M = 1
+## group = rep(1, N)
+
+
 # Run models
-samp_list = list()
 
 for (model_name in MODELS_TO_RUN) {
 
@@ -81,6 +86,8 @@ for (model_name in MODELS_TO_RUN) {
   mcmc_config = model_config$mcmc
   pars = model_config$keep_pars
 
+  # pars_w_z = c(pars, "z")
+
   samp = stan(
     file.path("xm_model", stan_fit_file),
     data = dat,
@@ -102,9 +109,15 @@ for (model_name in MODELS_TO_RUN) {
   print(summary(samp, pars))
 
   # # Stan versions of plotting routines
-  pairs(samp, pars=pars)
+  # pairs(samp, pars=pars)
   # traceplot(samp, pars=pars)
-  
+
+  ## # z
+  ## z_samp = extract(samp, "z")[[1]]
+  ## resid = t(t(z_samp) - y_data)
+  ## hist(y_data, prob=TRUE, col="#80808080", xlim=c(-20, 0), breaks=8)
+  ## hist(z_samp, prob=TRUE, col="#80000080", add=TRUE, breaks=8)
+
   # Plot
   samp_array = extract(samp, pars, permute=FALSE)
   
@@ -123,7 +136,6 @@ for (model_name in MODELS_TO_RUN) {
   ##   p_pairs_file = sprintf("%s-%s-real-p_pairs.png", SESSION_ID, model_name)
   ##   ggsave(p_pairs, file=file.path("..", "images", "xm_model", p_pairs_file))
   ## }
-
 
   if (config$write) {
     samp_file = sprintf("%s-fit.RData", model_name)
