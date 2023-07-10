@@ -4,7 +4,7 @@ max_depth: &max_depth -2.32
 min_angle: &min_angle -1.2
 max_angle: &max_angle -0.1
 use: 1.0
-models_to_run: ["m20"]
+models_to_run: ["m21"]
 mcmc:
   iter: 2000
   warmup: 1000
@@ -67,5 +67,21 @@ models:
       xi_start_mean: 2.
       xi_start_std: 0.1
     pars: ["mu_yp", "sig_yp", "xi_start"]
+  m21:
+    prior:
+      r: *rad
+      min_angle: *min_angle
+      max_angle: *max_angle
+      alpha: 0.5
+      mu_yp_mean: -9.
+      mu_yp_std: 4.
+      sig_yp_mean: 5.
+      sig_yp_std: 5.
+      frac_start_lower: 0.90
+      frac_start_upper: 0.97
+      lba_width: 0.05
+      uba_width: 0.15
+    pars: ["mu_yp", "sig_yp", "lba", "uba", "start_frac"]
+    
     
     
