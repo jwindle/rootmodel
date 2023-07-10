@@ -41,8 +41,9 @@ df_all$epoch_group = as.integer(df_all$epoch)
 
 
 # Sanity check & df_time_elec used for comparisons below
-depth_bins_no_pad = depth_ivals[seq(3, 23, by=4)]
-depth_bins = depth_bins_no_pad
+depth_bins_no_pad_1 = depth_ivals[seq(3, 23, by=2)]
+depth_bins_no_pad_2 = depth_ivals[seq(3, 23, by=4)]
+depth_bins = depth_bins_no_pad_1
 DEPTH_BINS = depth_bins
 
 df_coarse = coarsen_rt_data(
