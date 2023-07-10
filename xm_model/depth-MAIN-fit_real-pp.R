@@ -22,7 +22,6 @@ EPOCHS = levels(df_time_elec$epoch)
 
 
 # Simulate
-samp_list = list()
 
 for (sim_name in SIMS_TO_RUN) {
 
@@ -58,7 +57,7 @@ for (sim_name in SIMS_TO_RUN) {
   
   samp_array_2 = simplify2array(extract(samp, pars))
 
-  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=10)),,]
+  samp_array_sub = samp_array_2[with(model_config$mcmc, seq(1, (iter - warmup) * chains, by=10)),,,drop=FALSE]
   
   sim_model = stan_model(file.path("xm_model", stan_sim_file), verbose=FALSE)
   
@@ -83,6 +82,12 @@ for (sim_name in SIMS_TO_RUN) {
     DEPTH_BINS,
     EPOCHS
   )
+
+  ## Plots that might be helpful
+  ## hist(y_data, prob=TRUE, col="#80808080", breaks=8, xlim=c(-20, 0))
+  ## hist(sim_depths_df$depth_cm, prob=TRUE, col="#80000080", breaks=8, add=TRUE)
+
+  ## pairs(samp, pars=pars)
 
   if (config$write) {
     paths_file = sprintf("%s-paths.RData", sim_name)
