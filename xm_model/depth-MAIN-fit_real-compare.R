@@ -10,7 +10,7 @@ library("yaml")
 library("gridExtra")
 
 
-config = read_yaml("xm_model/depth-MAIN-fit_real-log-config.yaml")
+config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 SIMS_TO_RUN = config$simulations_to_run
 SIMS_TO_RUN

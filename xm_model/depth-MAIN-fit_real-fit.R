@@ -9,7 +9,7 @@ library("yaml")
 
 
 # CONFIG
-config = read_yaml("xm_model/depth-MAIN-fit_real-log-config.yaml")
+config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 # EPOCHS = config$epochs
 MODELS_TO_RUN = config$models_to_run

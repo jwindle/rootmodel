@@ -10,7 +10,7 @@ library("yaml")
 
 
 # Config
-config = read_yaml("xm_model/depth-MAIN-fit_real-log-config.yaml")
+config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 
 SIMS_TO_RUN = config$simulations_to_run
 # SIMS_TO_RUN = c("m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k")
