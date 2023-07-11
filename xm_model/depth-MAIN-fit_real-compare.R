@@ -142,7 +142,7 @@ df_comp_summary = df_comp %>%
     check = sum(prop)
   )
 
-print(df_comp_summary, n=20)
+print(df_comp_summary, n=44)
 
 df_comp_summary_summary = df_comp_summary %>%
   # filter(epoch %in% c("(10,18]", "(22,28]")) %>%
@@ -152,7 +152,7 @@ df_comp_summary_summary = df_comp_summary %>%
     mkl = mean(kl)
   )
 
-print(df_comp_summary_summary, n=40)
+print(df_comp_summary_summary %>% filter(thresh == Inf), n=40)
 
 
 if (config$write) {
@@ -189,6 +189,7 @@ if (config$write) {
 
 p_comp_prop_no_thresh = df_comp %>%
   filter(thresh == Inf) %>%
+  # filter(grepl("(2k|empirical)", model)) %>%
   ggplot(aes(depth_bin, prop, color=model)) +
   geom_point() +
   geom_line(aes(group=model)) +
