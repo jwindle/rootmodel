@@ -1,6 +1,6 @@
 crop: "Corn"
 r: 8.
-K: 1
+K: 3
 prior:
   mu_y_prior_mean: 8.
   mu_y_prior_std: 4.
