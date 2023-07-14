@@ -356,8 +356,30 @@ inv_log_transform <- function(x, y0) {
 }
 
 
+refine_paths_matrix <- function(P, kink_sep, n) {
+  # Assumes equally spaced kinks / knots
+  # P is M x (K+1) matrix
+  # r is radius
+  # n is number of intermediate kinks
+  # add_origin is book indicating to add origin or not
+  nk = ncol(P)
+  Y0 = P[,1:(nk-1),drop=FALSE]
+  DY = P[,2:(nk),drop=FALSE] - Y0
+  one = rep(1, n)
+  delta = kink_sep * seq(1, n, length.out=n) / n
+  expanded_paths = aperm(outer(DY, delta) / mu_dx + outer(Y0, one), c(1, 3, 2))
+  expanded_paths_dim = dim(expanded_paths)
+  EP = cbind(
+    P[,1],
+    matrix(expanded_paths, nrow=expanded_paths_dim[1], byrow=FALSE)
+  )
+  return(EP)
+}
+
+
 refine_paths <- function(paths, mu_dx, n, transform) {
   # Assuming we are on an equally spaced grid
+  # Paths to start are (sim_sample, kink, param_sample, epoch)
 
   paths_t = aperm(paths, c(3, 1, 2, 4))
   paths_t_dim = dim(paths_t)
@@ -375,13 +397,14 @@ refine_paths <- function(paths, mu_dx, n, transform) {
         byrow=FALSE
       )
     )
-    Y0 = P[,1:Kp1,drop=FALSE]
-    DY = P[,2:(Kp1+1),drop=FALSE] - Y0
-    one = rep(1, n)
-    delta = mu_dx * seq(1, n, length.out=n) / n
-    expanded_paths = aperm(outer(DY, delta) / mu_dx + outer(Y0, one), c(1, 3, 2))
-    expanded_paths_dim = dim(expanded_paths)
-    EP = matrix(expanded_paths, nrow=expanded_paths_dim[1], byrow=FALSE)
+    ## Y0 = P[,1:Kp1,drop=FALSE]
+    ## DY = P[,2:(Kp1+1),drop=FALSE] - Y0
+    ## one = rep(1, n)
+    ## delta = mu_dx * seq(1, n, length.out=n) / n
+    ## expanded_paths = aperm(outer(DY, delta) / mu_dx + outer(Y0, one), c(1, 3, 2))
+    ## expanded_paths_dim = dim(expanded_paths)
+    ## EP = matrix(expanded_paths, nrow=expanded_paths_dim[1], byrow=FALSE)
+    EP = refine_paths_matrix(P, mu_dx, n)
     EP_list[[i]] = EP
   }
   
