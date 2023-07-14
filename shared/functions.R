@@ -394,3 +394,98 @@ refine_paths <- function(paths, mu_dx, n, transform) {
   
   return(EP_array)
 }
+
+
+sim_plants <- function(mdl, N, p, mu_dm, sig_dm, shape_dm, time_grid, max_trials, r, mu_dx) {
+
+  t_if_needed = function(x) {
+    if (length(dim(x)) < 2) {
+      return(t(x))
+    }
+    return(x)
+  }
+
+  K = get_K(r, mu_dx)
+  ntimes = length(time_grid)
+  
+  p = t_if_needed(p)
+  mu_dm = t_if_needed(mu_dm)
+  sig_dm = t_if_needed(sig_dm)
+  shape_dm = t_if_needed(shape_dm)
+
+  n1 = nrow(p)
+  n2 = nrow(mu_dm)
+
+  # Two possible methods
+  if (N == 0) {
+    # Cross
+    idc1 = rep(1:n1, times=n2)
+    idc2 = rep(1:n2, n1)
+  } else {
+    # Sample with replacement
+    idc1 = sample(1:n1, replace=TRUE, size=N)
+    idc2 = sample(1:n2, replace=TRUE, size=N)
+  }
+
+  N = ifelse(N > 1, N, 1)
+
+  # Now make samples
+  df_list = list()
+  for (i in 1:N) {
+    
+    i1 = idc1[i]
+    i2 = idc2[i]
+    
+    num_roots = rbinom(ntimes, p=p[i1,], size=max_trials)
+    root_times = rep(1:ntimes, times=num_roots)
+
+    n_roots = length(root_times)
+
+    # Check
+    if (!all(table(root_times) == num_roots[num_roots > 0])) {
+      print("PROBLEM!!!")
+    }
+
+    dat = list(
+      mu_dx = mu_dx,
+      K = K,
+      r = r,
+      n_times = ntimes,
+      n_observed_times = n_roots,
+      time_index = root_times,
+      mu_dm = mu_dm[i2,],
+      sig_dm = sig_dm[i2,],
+      shape_dm = shape_dm[i2,]
+    )
+
+    sim_plant_out = sampling(
+      sim_plant_mdl,
+      data=dat,
+      iter=1,
+      warmup=0,
+      chains=1,
+      cores=1,
+      algorithm="Fixed_param",
+      refresh=FALSE
+    )
+
+    root_df = data.frame(
+      time_index = root_times,
+      plant = i,
+      p_id = i1,
+      d_id = i2,
+      root_id = 1:n_roots,
+      angle = runif(n_roots, min=0, max=2 * pi),
+      starting_hour = sample(0:23, size=n_roots, replace=TRUE)
+    )
+
+    paths_df = as.data.frame(drop(extract(sim_plant_out, "path")[[1]]))
+    colnames(paths_df) = paste("depth", 1:(K+1), sep="_")
+
+    df_list[[i]] = cbind(root_df, paths_df)
+    
+  }
+
+  df = do.call(rbind, df_list)
+  return(df)
+}
