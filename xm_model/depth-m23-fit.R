@@ -3,10 +3,19 @@
 
 library("ggplot2")
 library("gridExtra")
-
+library("yaml")
 library("rstan")
 
 source("shared/functions.R")
+
+
+# CONFIG
+config = read_yaml("xm_model/depth-m23-fit-corn.yaml")
+CROP = config$crop
+r = config$r
+K = config$K
+mu_dx = r / (K+1)
+
 
 # Load
 df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
@@ -19,14 +28,12 @@ time_grid = unique(df_all$days_since_start)
 df_all$time_group =  match(df_all$days_since_start, time_grid)
 
 
-# Simplify and plot data
-
+# Data for fitting
 depths_df = df_all %>%
     filter(
         count > 0,
-        crop == "Corn"
+        crop == Crop
     )
-
 
 y_data = depths_df$depth_cm
 n_obs = length(y_data)
@@ -37,23 +44,22 @@ n_times = max(time_group)
 # Model
 mdl_23 = stan_model("xm_model/depth-m23-fit.stan", model_name="depth-m23-fit", verbose=TRUE)
 
+
 # Data
-dat = list(
+base_dat = list(
   n_obs = n_obs,
   n_times = n_times,
   time_grid = 1:n_times,
   time_group = time_group,
-  r = 8.0,
-  mu_dx = 4.,
-  K = 1,
-  y = y_data,
-  mu_y_prior_mean = 8.,
-  mu_y_prior_std = 4.,
-  sig_y_prior_mean = 4,
-  sig_y_prior_std = 4,
-  shape_dm_prior_mean = 0,
-  shape_dm_prior_std = 5
+  r = r,
+  mu_dx = mu_dx,
+  K = K,
+  y = y_data
 )
+
+dat = c(base_dat, config$prior)
+dat
+
 
 # Fit - had to up adapt_delta to 0.95 to git rid of divergent
 # transitions.
@@ -149,4 +155,5 @@ time_var_df %>% filter(var == "shape_dm") %>%
 
 # Save for generating plant roots
 
-save(mu_dm, sig_dm, shape_dm, param_procs, out_23, file=file.path("cache", "depth-m23-fit.RData"))
+file_name = sprintf("m23-fit-%s.RData", CROP)
+save(mu_dm, sig_dm, shape_dm, param_procs, out_23, file=file.path("cache", file_name))
