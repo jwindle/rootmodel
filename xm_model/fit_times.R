@@ -9,9 +9,13 @@ library("rstan")
 source("shared/functions.R")
 
 
+# Config
+CROP = "Corn"
+
+
 # Load
 df_all = load_rt_data("data/acc-1-v3.csv") %>%
-    filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == "Corn")
+    filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == CROP)
 
 df_all$old_count = df_all$count
 df_all$count = 1 * (df_all$old_count > 0)
@@ -219,7 +223,7 @@ p_binom_mean_2 = ggplot(posterior_df, aes(x=time_grid, y=m2_50)) +
 
 p_binom_mean_2
 
-p_binom_mean_file = "fit_times_real-p_binom_mean.png"
+p_binom_mean_file = sprintf("fit_times_real-p_binom_mean-%s.png", CROP)
 ggsave(p_binom_mean_2, file=file.path("images", "xm_model", p_binom_mean_file))
 
 
@@ -237,7 +241,8 @@ p_period_hist
 
 p_binom_mean_and_per_hist = grid.arrange(p_binom_mean_2, p_period_hist, widths=c(2,1))
 
-ggsave(p_binom_mean_and_per_hist, file=file.path("images", "xm_model", "p_binom_mean_and_per_hist.png"), width=10, height=4, units="in")
+p_both_file = sprtinf("p_binom_mean_and_per_hist-%s.png", CROP)
+ggsave(p_binom_mean_and_per_hist, file=file.path("images", "xm_model", p_both_file), width=10, height=4, units="in")
 
 
 # In case you want to examine residuals...
@@ -261,4 +266,5 @@ ggplot(df_dev_time) +
 
 # Save posterior predictive for later use
 
-save(time_grid, fit_times_out, binom_probs, plant_binom_probs, max_trials, file=file.path("cache", "fit_times.RData"))
+data_file = sprintf("fit_times-%s.RData")
+save(time_grid, fit_times_out, binom_probs, plant_binom_probs, max_trials, file=file.path("cache", data_file))

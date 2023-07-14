@@ -1,0 +1,10 @@
+crop: "Wheat"
+r: 8.
+K: 3
+prior:
+  mu_y_prior_mean: 8.
+  mu_y_prior_std: 4.
+  sig_y_prior_mean: 4.
+  sig_y_prior_std: 4.
+  shape_dm_prior_mean: 0.
+  shape_dm_prior_std: 5.
