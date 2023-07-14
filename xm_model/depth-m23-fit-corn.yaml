@@ -8,4 +8,8 @@ prior:
   sig_y_prior_std: 4.
   shape_dm_prior_mean: 0.
   shape_dm_prior_std: 5.
-
+mcmc:
+  iter: 8000
+  warmup: 4000
+  cores: 4
+  chains: 4

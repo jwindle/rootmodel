@@ -19,7 +19,7 @@ mu_dx = r / (K+1)
 
 # Load
 df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
-    filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == "Corn")
+    filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == CROP)
 
 df_all$old_count = df_all$count
 df_all$count = 1 * (df_all$old_count > 0)
@@ -32,7 +32,7 @@ df_all$time_group =  match(df_all$days_since_start, time_grid)
 depths_df = df_all %>%
     filter(
         count > 0,
-        crop == Crop
+        crop == CROP
     )
 
 y_data = depths_df$depth_cm
@@ -66,12 +66,12 @@ dat
 out_23 = sampling(
   mdl_23,
   data=dat,
-  iter=1000,
-  warmup=500,
-  chains=1,
-  cores=1,
+  iter=config$mcmc$iter,
+  warmup=config$mcmc$warmup,
+  chains=config$mcmc$chains,
+  cores=config$mcmc$cores,
   control = list(
-    adapt_delta = 0.99,
+    adapt_delta = 0.95,
     adapt_t0 = 10
   )
 )
@@ -81,7 +81,7 @@ static_pars = c("mu_y_gbl_mean", "sig_y_gbl_mean", "shape_dm_gbl_mean")
 
 proc_pars = c("mu_y", "sig_y", "shape_dm")
 
-samp_df = extract(out_23, static_pars) %>% as_tibble()
+# samp_df = extract(out_23, static_pars) %>% as_tibble()
 
 summary(out_23, pars=static_pars)
 
