@@ -471,6 +471,7 @@ sim_plants <- function(mdl, N, p, mu_dm, sig_dm, shape_dm, time_grid, max_trials
 
     root_df = data.frame(
       time_index = root_times,
+      time = time_grid[root_times],
       plant = i,
       p_id = i1,
       d_id = i2,
