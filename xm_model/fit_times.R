@@ -10,7 +10,7 @@ source("shared/functions.R")
 
 
 # Config
-CROP = "Corn"
+CROP = "Wheat"
 
 
 # Load
@@ -241,7 +241,7 @@ p_period_hist
 
 p_binom_mean_and_per_hist = grid.arrange(p_binom_mean_2, p_period_hist, widths=c(2,1))
 
-p_both_file = sprtinf("p_binom_mean_and_per_hist-%s.png", CROP)
+p_both_file = sprintf("p_binom_mean_and_per_hist-%s.png", CROP)
 ggsave(p_binom_mean_and_per_hist, file=file.path("images", "xm_model", p_both_file), width=10, height=4, units="in")
 
 
@@ -266,5 +266,5 @@ ggplot(df_dev_time) +
 
 # Save posterior predictive for later use
 
-data_file = sprintf("fit_times-%s.RData")
+data_file = sprintf("fit_times-%s.RData", CROP)
 save(time_grid, fit_times_out, binom_probs, plant_binom_probs, max_trials, file=file.path("cache", data_file))
