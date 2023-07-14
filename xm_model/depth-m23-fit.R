@@ -9,7 +9,7 @@ library("rstan")
 source("shared/functions.R")
 
 # Load
-df_all = load_rt_data("../data/acc-1-v3.csv") %>%
+df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
     filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == "Corn")
 
 df_all$old_count = df_all$count
@@ -41,7 +41,7 @@ mdl_23 = stan_model("xm_model/depth-m23-fit.stan", model_name="depth-m23-fit", v
 dat = list(
   n_obs = n_obs,
   n_times = n_times,
-  time_grid = 1:M,
+  time_grid = 1:n_times,
   time_group = time_group,
   r = 8.0,
   mu_dx = 4.,
@@ -105,10 +105,14 @@ plot(f_gp_mean[3,], main="shape_dm deviations", type="l")
 
 
 # Extract posterior samples of interest
-time_var_samp = extract(out_23, c("mu_y", "sig_y", "shape_dm"))
+param_procs = extract(out_23, c("mu_y", "sig_y", "shape_dm"))
+
+mu_dm = extract(out_23, "mu_dm")[[1]]
+sig_dm = extract(out_23, "sig_dm")[[1]]
+shape_dm = param_procs[["shape_dm"]]
 
 time_var_q_list = lapply(
-  time_var_samp,
+  param_procs,
   function(x, tg) {
     temp_df = as.data.frame(t(apply(x, 2, quantile, c(0.25, 0.5, 0.75))))
     temp_df$time_grid = tg
@@ -143,3 +147,6 @@ time_var_df %>% filter(var == "shape_dm") %>%
 
 
 
+# Save for generating plant roots
+
+save(mu_dm, sig_dm, shape_dm, param_procs, out_23, file=file.path("cache", "depth-m23-fit.RData"))
