@@ -1,6 +1,7 @@
 crop: "Corn"
 r: 8.
 K: 3
+refine_factor: 6
 prior:
   mu_y_prior_mean: 8.
   mu_y_prior_std: 4.
