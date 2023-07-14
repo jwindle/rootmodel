@@ -78,7 +78,7 @@ fit_times_out = sampling(
   fit_times_mdl,
   data=dat,
   iter=7000,
-  warmup=400,
+  warmup=4000,
   chains=3,
   cores=3,
   control = list(
@@ -143,6 +143,8 @@ sigma_error_array = array(sigma_plant, dim=c(dim_Z1, n_plants))
 sigma_error_array_dim = dim(sigma_error_array)
 
 Z2 = array(rnorm(prod(sigma_error_array_dim), mean=0.0, sd=sigma_error_array), dim=sigma_error_array_dim)
+
+binom_probs = Z1
 
 plant_binom_probs = 1 / (1 + exp(-sweep(Z2, 1:2, Z1, FUN="+")))
 
@@ -259,4 +261,4 @@ ggplot(df_dev_time) +
 
 # Save posterior predictive for later use
 
-save(fit_times_out, plant_binom_probs, max_trials, file=file.path("cache", "fit_times.RData"))
+save(time_grid, fit_times_out, binom_probs, plant_binom_probs, max_trials, file=file.path("cache", "fit_times.RData"))
