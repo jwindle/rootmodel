@@ -15,13 +15,16 @@ config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
 SIMS_TO_RUN = config$simulations_to_run
 SIMS_TO_RUN
 
+CROP = config$crop
+SESSION_ID = tolower(CROP)
+
 PATHS_TO_PLOT = 50
 
 
 # Load
 load("cache/detections.RData")
 
-df_time_elec_corn = df_time_elec %>% filter(crop == "Corn")
+df_time_elec_corn = df_time_elec %>% filter(crop == CROP)
 
 
 # Make comparisons
@@ -31,7 +34,7 @@ frac_positive_list = list()
 
 for (sim_name in SIMS_TO_RUN) {
 
-  paths_file = sprintf("%s-paths.RData", sim_name)
+  paths_file = sprintf("%s-%s-paths.RData", SESSION_ID, sim_name)
   load(file=file.path("cache", paths_file))
 
   frac_positive_list[[sim_name]] = sim_depths_df %>%
@@ -86,12 +89,17 @@ for (sim_name in SIMS_TO_RUN) {
     col = "#80808040"
     path_idc = floor(seq(1, d[1], length.out = PATHS_TO_PLOT))
 
-    png(file.path("images", "xm_model", sprintf("%s-paths.png", sim_name)), width=700, height=400, units="px")
+    png(
+      file.path("images", "xm_model", sprintf("%s-%s-paths.png", SESSION_ID, sim_name)),
+      width=700,
+      height=400,
+      units="px"
+    )
     
     par(mfrow=c(1,4))
     for (i in 1:4) {
       jj = path_idc[1]
-      plot_title = sprintf("Paths epoch %d", i)
+      plot_title = sprintf("Paths epoch %d, %s", i, SESSION_ID)
       plot(x_grid, sim_paths_refined[jj,,i], ylim=c(-18., 1.), col=col, type="l", main=plot_title, xlab="x (cm)", ylab="y (cm)")
       for (j in 2:PATHS_TO_PLOT) {
         jj = path_idc[j]
@@ -157,29 +165,29 @@ print(df_comp_summary_summary %>% filter(thresh == Inf), n=40)
 
 if (config$write) {
 
-  comp_summary_file = file.path("cache", "fit_real-comp_summary.%s")
-  comp_sum_sum_file = file.path("cache", "fit_real-comp_sum_sum.%s")
-  frac_pos_file = file.path("cache", "fit_real-frac_pos.%s")
+  comp_summary_file = file.path("cache", "%s-fit_real-comp_summary.%s")
+  comp_sum_sum_file = file.path("cache", "%s-fit_real-comp_sum_sum.%s")
+  frac_pos_file = file.path("cache", "%s-fit_real-frac_pos.%s")
 
-  write.csv(df_comp_summary, file=sprintf(comp_summary_file, "csv"))
+  write.csv(df_comp_summary, file=sprintf(comp_summary_file, SESSION_ID, "csv"))
   print(
     xtable(df_comp_summary, digits=3),
     include.rownames=FALSE,
-    file=sprintf(comp_summary_file, "tex")
+    file=sprintf(comp_summary_file, SESSION_ID, "tex")
   )  
 
-  write.csv(df_comp_summary_summary, file=sprintf(comp_sum_sum_file, "csv"))
+  write.csv(df_comp_summary_summary, file=sprintf(comp_sum_sum_file, SESSION_ID, "csv"))
   print(
     xtable(df_comp_summary_summary, digits=3),
     include.rownames=FALSE,
-    file=sprintf(comp_sum_sum_file, "tex")
+    file=sprintf(comp_sum_sum_file, SESSION_ID, "tex")
   )
   
-  write.csv(frac_pos_df, file=sprintf(frac_pos_file, "csv"))
+  write.csv(frac_pos_df, file=sprintf(frac_pos_file, SESSION_ID, "csv"))
   print(
     xtable(frac_pos_df, digits=3),
     include.rownames=FALSE,
-    file=sprintf(frac_pos_file, "tex")
+    file=sprintf(frac_pos_file, SESSION_ID, "tex")
   )
 
 }
@@ -215,8 +223,8 @@ p_comp_prop_thresh
 
 
 if (config$write) {
-  p_comp_no_thresh_file = sprintf("fit_real-p_comp_prop-no_thresh.png")
+  p_comp_no_thresh_file = sprintf("%s-fit_real-p_comp_prop-no_thresh.png", SESSION_ID)
   ggsave(p_comp_prop_no_thresh, file=file.path("images", "xm_model", p_comp_no_thresh_file))
-  p_comp_thresh_file = sprintf("fit_real-p_comp_prop-thresh.png")
+  p_comp_thresh_file = sprintf("%s-fit_real-p_comp_prop-thresh.png", SESSION_ID)
   ggsave(p_comp_prop_thresh, file=file.path("images", "xm_model", p_comp_thresh_file))
 }

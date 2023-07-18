@@ -16,6 +16,9 @@ SIMS_TO_RUN = config$simulations_to_run
 # SIMS_TO_RUN = c("m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k")
 SIMS_TO_RUN
 
+CROP = config$crop
+SESSION_ID = tolower(CROP)
+
 # Load
 load(file.path("cache", "detections.RData"))
 EPOCHS = levels(df_time_elec$epoch)
@@ -50,7 +53,7 @@ for (sim_name in SIMS_TO_RUN) {
   ## }
   # samp = samp_list[[sim_name]]
   
-  samp_file = sprintf("%s-fit.RData", model_name)
+  samp_file = sprintf("%s-%s-fit.RData", SESSION_ID, model_name)
   load(file=file.path("cache", samp_file))
   
   pars = sim_config$pars
@@ -90,7 +93,7 @@ for (sim_name in SIMS_TO_RUN) {
   ## pairs(samp, pars=pars)
 
   if (config$write) {
-    paths_file = sprintf("%s-paths.RData", sim_name)
+    paths_file = sprintf("%s-%s-paths.RData", SESSION_ID, sim_name)
     save(
       sim_paths,
       sim_paths_refined,

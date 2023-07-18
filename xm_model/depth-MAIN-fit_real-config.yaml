@@ -28,7 +28,7 @@ models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14", "m21_1k", "m2
 simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m21_1k", "m21_2k", "m21_3k"]
 # simulations_to_run: ["m08_2k", "m09_2k", "m10_2k", "m14_2k", "m21_2k"]
 data_frac: 1.0
-crop: "Corn"
+crop: "Wheat"
 mcmc: &default_mcmc
   iter: 7000
   warmup: 3000

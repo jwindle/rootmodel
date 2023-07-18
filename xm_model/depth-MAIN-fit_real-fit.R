@@ -20,7 +20,7 @@ USE = config$data_frac
 CROP = config$crop
 c(USE, CROP)
 
-SESSION_ID = "TEST"
+SESSION_ID = tolower(CROP)
 
 # Load and take subset of data
 # df_all = read.csv("data/acc-1-v3-cleaned.csv", stringsAsFactors=TRUE)
@@ -121,7 +121,7 @@ for (model_name in MODELS_TO_RUN) {
   # Plot
   samp_array = extract(samp, pars, permute=FALSE)
   
-  p_hist = mcmc_hist(samp_array) + ggtitle(sprintf("Posteriors model %s", model_name))
+  p_hist = mcmc_hist(samp_array) + ggtitle(sprintf("Posteriors model %s %s", model_name, SESSION_ID))
   p_hist
 
   if (config$write) {
@@ -138,7 +138,7 @@ for (model_name in MODELS_TO_RUN) {
   ## }
 
   if (config$write) {
-    samp_file = sprintf("%s-fit.RData", model_name)
+    samp_file = sprintf("%s-%s-fit.RData", SESSION_ID, model_name)
     save(samp, file=file.path("cache", samp_file))
   }
 
