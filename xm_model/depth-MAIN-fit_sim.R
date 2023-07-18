@@ -9,6 +9,8 @@ library("yaml")
 
 config = read_yaml("xm_model/depth-MAIN-fit_sim.yaml")
 
+MODELS_TO_RUN = config$models_to_run
+MODELS_TO_RUN
 
 USE = config$use
 ITER = config$mcmc$iter
