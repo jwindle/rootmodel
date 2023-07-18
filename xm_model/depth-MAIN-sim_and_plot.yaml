@@ -6,7 +6,7 @@ min_angle: &min_angle -1.2
 max_angle: &max_angle -0.1
 mu_dx: &mu_dx [2.0, 2.66666666666667, 4.0]
 K: &K [3, 2, 1]
-models_to_run: ["m21"]
+models_to_run: ["m22"]
 stan_data:
   m02:
     "N": *nsamp
@@ -138,6 +138,32 @@ stan_data:
       'length.out': 1
     mu_yp:
       from: -24.
+      to: -4.
+      'length.out': 5
+    sig_yp:
+      from: 3.
+      to: 7.
+      'length.out': 3
+  m22:
+    "N": *nsamp
+    r: *rad
+    K: *K
+    rho_l: 0.05
+    rho_u: 0.95
+    lba:
+     from: *min_angle
+     to: *min_angle
+     'length.out': 1
+    uba:
+     from: *max_angle
+     to: *max_angle
+     'length.out': 1
+    rho_start:
+      from: 0.95
+      to: 0.95
+      'length.out': 1
+    mu_yp:
+      from: -16.
       to: -4.
       'length.out': 5
     sig_yp:
