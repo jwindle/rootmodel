@@ -23,9 +23,9 @@ mu_dx_3k: &mu_dx_3k 2.0
 frac_var: &frac_var 0.9
 write: True
 models_to_run: ["m22_3k"]
-simulations_to_run: ["m22_1k", "m22_2k", "m22_3k"]
+simulations_to_run: ["m21_1k", "m21_2k", "m22_1k", "m22_2k"]
 # models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14", "m21_1k", "m21_2k", "m21_3k", "m22_1k", "m22_2k", "m22_3k"]
-# simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m21_1k", "m21_2k", "m21_3k", "m22_1k", "m22_2k", "m22_3k"]
+# simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m21_1k", "m21_2k", "m21_3k"]
 # simulations_to_run: ["m08_2k", "m09_2k", "m10_2k", "m14_2k", "m21_2k"]
 data_frac: 1.0
 crop: "Corn"
