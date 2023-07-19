@@ -9,10 +9,11 @@ source("shared/functions.R")
 
 # Config
 EPOCHS = c(0, 10, 18, 22, 28)
-n_exampls = 10
+n_examples = 10
 
-config = read_yaml("xm_model/depth-m23-fit-corn.yaml")
+config = read_yaml("xm_model/depth-m23-fit-wheat.yaml")
 CROP = config$crop
+SESSION_ID = tolower(CROP)
 r = config$r
 K = config$K
 refine_factor = config$refine_factor
@@ -20,10 +21,10 @@ mu_dx = r / (K+1)
 
 
 # Load
-fit_times_name = sprintf("fit_times-%s.RData", CROP)
+fit_times_name = sprintf("%s-fit_times.RData", SESSION_ID)
 load(file.path("cache", fit_times_name))
 
-depth_m23_name = sprintf("m23-fit-%s.RData", CROP)
+depth_m23_name = sprintf("%s-m23-fit.RData", SESSION_ID)
 load(file.path("cache", depth_m23_name))
 
 
@@ -98,7 +99,8 @@ plants_df$time_bin = cut(plants_df$time, breaks=EPOCHS, include.lowest=TRUE, ord
 head(plants_df)
 
 plants_long_df = plants_df %>%
-  filter(depth_1 < 0, depth_2 < 0) %>%
+  # filter(depth_1 < 0, depth_2 < 0) %>%
+  filter(depth_1 < 0.0, depth_2 < 0.0, depth_3 < 0.0, depth_4 < 0.0) %>%
   tidyr::pivot_longer(
     cols = starts_with("depth"),
     names_prefix = "depth_",
@@ -115,10 +117,11 @@ head(plants_long_df)
 
 # 2-D view of roots over time
 p_plants_over_time =
-  ggplot(plants_long_df, aes(rad, depth)) +
+  plants_long_df %>%
+  ggplot(aes(rad, depth)) +
   geom_line(aes(group=root_id)) +
   facet_grid(cols=vars(plant), rows=vars(time_bin)) +
-  ggtitle("Example root trajectory by epoch of emergence") +
+  ggtitle(sprintf("Example root trajectory by epoch of emergence - %s", SESSION_ID)) +
   xlab("radius (cm)") +
   ylab("depth (cm)")
 
@@ -126,7 +129,7 @@ p_plants_over_time
 
 ggsave(
   p_plants_over_time,
-  file = file.path("images", "xm_model", sprintf("p_plants_over_time-%s.png", CROP)),
+  file = file.path("images", "xm_model", sprintf("p_plants_over_time-%s.png", SESSION_ID)),
   width = 6,
   height = 6,
   units = "in"
@@ -135,10 +138,11 @@ ggsave(
 
 # 2-D view of roots over time
 p_plants_final =
-  ggplot(plants_long_df, aes(rad, depth)) +
+  plants_long_df %>%
+  ggplot(aes(rad, depth)) +
   geom_line(aes(group=paste(plant, root_id))) +
   facet_grid(cols=vars(plant)) +
-  ggtitle("Example root growth") +
+  ggtitle(sprintf("Example root growth - %s", SESSION_ID)) +
   xlab("radius (cm)") +
   ylab("depth (cm)")
 
@@ -146,7 +150,7 @@ p_plants_final
 
 ggsave(
   p_plants_final,
-  file = file.path("images", "xm_model", sprintf("p_plants_final-%s.png", CROP)),
+  file = file.path("images", "xm_model", sprintf("p_plants_final-%s.png", SESSION_ID)),
   width = 6,
   height = 3,
   units = "in"
@@ -179,8 +183,9 @@ canonical_df$time_bin = cut(canonical_df$time, breaks=EPOCHS, include.lowest=TRU
 
 head(canonical_df)
 
-canonical_long_df = cdf %>%
-  filter(depth_1 < 0, depth_2 < 0) %>%
+canonical_long_df = canonical_df %>%
+  # filter(depth_1 < 0, depth_2 < 0) %>%
+  filter(depth_1 < 0.0, depth_2 < 0.0, depth_3 < 0.0, depth_4 < 0.0) %>%
   tidyr::pivot_longer(
     cols = starts_with("depth"),
     names_prefix = "depth_",
@@ -188,8 +193,8 @@ canonical_long_df = cdf %>%
     values_to = "depth"
   ) %>%
   mutate(
-    kink = as.numeric(kink),
-    rad = mu_dx * kink / refine_factor,
+    kink = as.integer(kink),
+    rad = mu_dx * kink,
     x = rad * cos(angle),
     y = rad * sin(angle),
     kink = as.integer(kink),
@@ -205,7 +210,7 @@ p_canon_plants_over_time =
   ggplot(canonical_long_df, aes(rad, depth)) +
   geom_line(aes(group=root_id)) +
   facet_grid(cols=vars(plant), rows=vars(time_bin)) +
-  ggtitle("Example canonical root trajectory by epoch of emergence") +
+  ggtitle(sprintf("Example canonical root trajectory by epoch of emergence - %s", SESSION_ID)) +
   xlab("radius (cm)") +
   ylab("depth (cm)")
 
@@ -213,7 +218,7 @@ p_canon_plants_over_time
 
 ggsave(
   p_canon_plants_over_time,
-  file = file.path("images", "xm_model", sprintf("p_canon_plants_over_time-%s.png", CROP)),
+  file = file.path("images", "xm_model", sprintf("%s-p_canon_plants_over_time.png", SESSION_ID)),
   width = 6,
   height = 6,
   units = "in"
@@ -301,6 +306,13 @@ segments3D(
 total_hours = max(movie_df$time_hours)
 total_hours
 
+
+pers = list(
+  c(phi=30, theta=45),
+  c(phi=0, theta=20)
+)
+
+
 # par(mfrow = c(1,1))
 par(mar = c(0, 0, 3, 0))
 segments3D(
@@ -314,7 +326,9 @@ segments3D(
   ylim=c(-r,r),
   zlim=c(-18, 0),
   main = sprintf("Simulations of the canonical %s root system from experiment", tolower(CROP)),
-  ticktype="detailed"
+  ticktype="detailed",
+  phi = pers[[1]][["phi"]],
+  theta = pers[[1]][["theta"]]
 )
 one_plant_df = movie_df %>% filter(plant == 4)
 for (i in 1:total_hours) {
@@ -338,41 +352,45 @@ for (i in 1:total_hours) {
 # We have to do a double loop because I can't seem to get rgl.snapshot
 # or rgl.postscript to work.
 for (ell in 1:n_examples) {
-  for (j in 1:total_hours) {
-    file_name = sprintf("%s-%02d-%04d.png", CROP, ell, i)
-    png(file.path("images", "frames", file_name))
-    # par(mfrow = c(1,1))
-    par(mar = c(0, 0, 3, 0))
-    segments3D(
-      x0 = 0,
-      y0 = 0,
-      z0 = 0,
-      x1 = 0,
-      y1 = 0,
-      z1 = 0,
-      xlim=c(-r,r),
-      ylim=c(-r,r),
-      zlim=c(-18, 0),
-      main = sprintf("Simulations of the canonical %s root system from experiment", tolower(CROP)),
-      ticktype="detailed"
-    )
-    one_plant_df = movie_df %>% filter(plant == ell)
-    for (i in 1:j) {
-      df_cur = one_plant_df %>% filter(time_hours == i, kink > 0)
-      df_prev = one_plant_df %>% filter(time_hours == (i-1), kink < (K+1))
-      if (nrow(df_cur) > 0) {
-        segments3D(
-          x0 = df_prev$x,
-          y0 = df_prev$y,
-          z0 = df_prev$depth,
-          x1 = df_cur$x,
-          y1 = df_cur$y,
-          z1 = df_cur$depth,
-          add = TRUE
-        )
+  for (m in 1:2) {
+    for (j in 1:total_hours) {
+      file_name = sprintf("%s-E%02d-P%02d-F%04d.png", SESSION_ID, ell, m, i)
+      png(file.path("images", "frames", file_name))
+      # par(mfrow = c(1,1))
+      par(mar = c(0, 0, 3, 0))
+      segments3D(
+        x0 = 0,
+        y0 = 0,
+        z0 = 0,
+        x1 = 0,
+        y1 = 0,
+        z1 = 0,
+        xlim=c(-r,r),
+        ylim=c(-r,r),
+        zlim=c(-18, 0),
+        main = sprintf("Simulations of the canonical %s root system from experiment", tolower(CROP)),
+        ticktype="detailed",
+        phi = pers[[m]][["phi"]],
+        theta = pers[[m]][["theta"]]
+      )
+      one_plant_df = movie_df %>% filter(plant == ell)
+      for (i in 1:j) {
+        df_cur = one_plant_df %>% filter(time_hours == i, kink > 0)
+        df_prev = one_plant_df %>% filter(time_hours == (i-1), kink < (K+1))
+        if (nrow(df_cur) > 0) {
+          segments3D(
+            x0 = df_prev$x,
+            y0 = df_prev$y,
+            z0 = df_prev$depth,
+            x1 = df_cur$x,
+            y1 = df_cur$y,
+            z1 = df_cur$depth,
+            add = TRUE
+          )
+        }
       }
+      dev.off()
     }
-    dev.off()
   }
 }
 
