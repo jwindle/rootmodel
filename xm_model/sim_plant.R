@@ -354,7 +354,7 @@ for (i in 1:total_hours) {
 for (ell in 1:n_examples) {
   for (m in 1:2) {
     for (j in 1:total_hours) {
-      file_name = sprintf("%s-E%02d-P%02d-F%04d.png", SESSION_ID, ell, m, i)
+      file_name = sprintf("%s-E%02d-P%02d-F%04d.png", SESSION_ID, ell, m, j)
       png(file.path("images", "frames", file_name))
       # par(mfrow = c(1,1))
       par(mar = c(0, 0, 3, 0))
