@@ -22,13 +22,13 @@ mu_dx_2k: &mu_dx_2k 2.67
 mu_dx_3k: &mu_dx_3k 2.0
 frac_var: &frac_var 0.9
 write: True
-# models_to_run: ["m21_1k", "m21_2k", "m21_3k"]
-# simulations_to_run: ["m21_1k", "m21_2k", "m21_3k"]
-models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14", "m21_1k", "m21_2k", "m21_3k"]
-simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m21_1k", "m21_2k", "m21_3k"]
+models_to_run: ["m22_1k", "m22_2k", "m22_3k"]
+simulations_to_run: ["m22_1k", "m22_2k", "m22_3k"]
+# models_to_run: ["m08", "m09", "m10_1k", "m10_2k", "m10_3k", "m14", "m21_1k", "m21_2k", "m21_3k", "m22_1k", "m22_2k", "m22_3k"]
+# simulations_to_run: ["m08_1k", "m08_2k", "m08_3k", "m09_1k", "m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k", "m14_1k", "m14_2k", "m14_3k", "m21_1k", "m21_2k", "m21_3k", "m22_1k", "m22_2k", "m22_3k"]
 # simulations_to_run: ["m08_2k", "m09_2k", "m10_2k", "m14_2k", "m21_2k"]
 data_frac: 1.0
-crop: "Wheat"
+crop: "Corn"
 mcmc: &default_mcmc
   iter: 7000
   warmup: 3000
@@ -219,6 +219,75 @@ models:
       uba_width: 0.15
     keep_pars: ["mu_yp", "sig_yp", "lba", "uba", "start_frac"]
     mcmc: *default_mcmc
+  m22_1k:
+    stan_file_id: "m22"
+    transform:
+      log_transform: False
+      offset: 0
+    constants:
+      r: *rad
+      min_angle: -1.15
+      max_angle: -0.20
+      mu_dx: *mu_dx_1k
+      frac_start_lower: 0.7
+      frac_start_upper: 0.97
+      rho_l: 0.05
+      rho_u: 0.95
+    prior:
+      mu_yp_prior_mean: 9.
+      mu_yp_prior_std: 4.
+      sig_yp_prior_mean: 0.
+      sig_yp_prior_std: 1.
+      lba_width: 0.10
+      uba_width: 0.15
+    keep_pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start", "mu_dxi", "sig_dxi", "z"]
+    mcmc: *default_mcmc
+  m22_2k:
+    stan_file_id: "m22"
+    transform:
+      log_transform: False
+      offset: 0
+    constants:
+      r: *rad
+      min_angle: -1.15
+      max_angle: -0.20
+      mu_dx: *mu_dx_2k
+      frac_start_lower: 0.7
+      frac_start_upper: 0.97
+      rho_l: 0.05
+      rho_u: 0.95
+    prior:
+      mu_yp_prior_mean: 9.
+      mu_yp_prior_std: 4.
+      sig_yp_prior_mean: 0.
+      sig_yp_prior_std: 1.
+      lba_width: 0.10
+      uba_width: 0.15
+    keep_pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start", "mu_dxi", "sig_dxi"]
+    mcmc: *default_mcmc
+  m22_3k:
+    stan_file_id: "m21"
+    transform:
+      log_transform: False
+      offset: 0
+    constants:
+      r: *rad
+      min_angle: -1.15
+      max_angle: -0.20
+      mu_dx: *mu_dx_3k
+      frac_start_lower: 0.7
+      frac_start_upper: 0.97
+      rho_l: 0.05
+      rho_u: 0.95
+    prior:
+      mu_yp_prior_mean: 9.
+      mu_yp_prior_std: 4.
+      sig_yp_prior_mean: 0.
+      sig_yp_prior_std: 1.
+      lba_width: 0.10
+      uba_width: 0.15
+    keep_pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start", "mu_dxi", "sig_dxi"]
+    mcmc: *default_mcmc
 simulations:
   m08_1k:
     model: "m08"
@@ -332,6 +401,18 @@ simulations:
     sim_info:
     pars: ["mu_yp", "sig_yp", "lba", "uba", "start_frac"]
   m21_3k:
-    model: "m21_2k"
+    model: "m21_3k"
     sim_info:
     pars: ["mu_yp", "sig_yp", "lba", "uba", "start_frac"]
+  m22_1k:
+    model: "m22_1k"
+    sim_info:
+    pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start"]
+  m22_2k:
+    model: "m22_2k"
+    sim_info:
+    pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start"]
+  m22_3k:
+    model: "m22_3k"
+    sim_info:
+    pars: ["mu_yp", "sig_yp", "lba", "uba", "rho_start"]
