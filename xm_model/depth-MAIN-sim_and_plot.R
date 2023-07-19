@@ -48,6 +48,16 @@ for (model_name in MODELS_TO_RUN) {
 
 
 
+## depths_ss = depths_df %>%
+##   group_by(K, mu_yp, sig_yp) %>%
+##   summarize(
+##     m_depth = mean(depth),
+##     s_depth = sd(depth)
+##   )
+
+## print(depths_ss, n=40)
+
+
 ## # Extract param names
 ## p_depths = depths_df %>%
 ##   filter(K == 3) %>%
