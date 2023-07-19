@@ -367,7 +367,7 @@ refine_paths_matrix <- function(P, kink_sep, n) {
   DY = P[,2:(nk),drop=FALSE] - Y0
   one = rep(1, n)
   delta = kink_sep * seq(1, n, length.out=n) / n
-  expanded_paths = aperm(outer(DY, delta) / mu_dx + outer(Y0, one), c(1, 3, 2))
+  expanded_paths = aperm(outer(DY, delta) / kink_sep + outer(Y0, one), c(1, 3, 2))
   expanded_paths_dim = dim(expanded_paths)
   EP = cbind(
     P[,1],
