@@ -197,7 +197,7 @@ if (config$write) {
 
 p_comp_prop_no_thresh = df_comp %>%
   filter(thresh == Inf) %>%
-  filter(grepl("(3k|empirical)", model)) %>%
+  # filter(grepl("(3k|empirical)", model)) %>%
   ggplot(aes(depth_bin, prop, color=model)) +
   geom_point() +
   geom_line(aes(group=model)) +
