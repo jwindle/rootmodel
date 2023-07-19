@@ -15,6 +15,7 @@ CROP = config$crop
 r = config$r
 K = config$K
 mu_dx = r / (K+1)
+SESSION_ID = tolower(CROP)
 
 
 # Load
@@ -155,5 +156,5 @@ time_var_df %>% filter(var == "shape_dm") %>%
 
 # Save for generating plant roots
 
-file_name = sprintf("m23-fit-%s.RData", CROP)
+file_name = sprintf("%s-m23-fit.RData", SESSION_ID)
 save(mu_dm, sig_dm, shape_dm, param_procs, out_23, file=file.path("cache", file_name))
