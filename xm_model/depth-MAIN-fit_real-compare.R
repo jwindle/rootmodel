@@ -8,6 +8,7 @@ library("rstan")
 library("bayesplot")
 library("yaml")
 library("gridExtra")
+library("xtable")
 
 
 config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
@@ -44,11 +45,11 @@ for (sim_name in SIMS_TO_RUN) {
     )
   frac_positive_list[[sim_name]]$sim_name = sim_name
 
-  threshes = c(1., Inf)
+  threshes = c(0., Inf)
   temp_list = list()
   for (i in 1:2) {
     temp_list[[i]] = sim_depths_df %>%
-      filter(shallowest_cm < threshes[i]) %>% # Eliminate unrealistic paths
+      filter(shallowest_cm <= threshes[i]) %>% # Eliminate unrealistic paths
       group_by(epoch, depth_bin) %>%
       summarize(n = n()) %>%
       ungroup() %>%
@@ -138,6 +139,7 @@ df_comp_null = df_time_elec_corn[,c("epoch", "depth_bin", "prop")] %>%
 
 df_comp = do.call(rbind, c(df_comp_list, list(df_comp_null)))
 df_comp$model = as.factor(df_comp$model)
+df_comp$paths = ifelse(df_comp$thresh == Inf, "all paths", "unrealistic removed")
 
 head(df_comp)
 tail(df_comp)
@@ -158,7 +160,8 @@ df_comp_summary_summary = df_comp_summary %>%
   summarize(
     mmae = mean(mae),
     mkl = mean(kl)
-  )
+  ) %>%
+  arrange(-thresh, model)
 
 print(df_comp_summary_summary %>% filter(thresh == Inf), n=40)
 
@@ -171,7 +174,7 @@ if (config$write) {
 
   write.csv(df_comp_summary, file=sprintf(comp_summary_file, SESSION_ID, "csv"))
   print(
-    xtable(df_comp_summary, digits=3),
+    xtable(df_comp_summary %>% select(-check), digits=3),
     include.rownames=FALSE,
     file=sprintf(comp_summary_file, SESSION_ID, "tex")
   )  
@@ -197,7 +200,7 @@ if (config$write) {
 
 p_comp_prop_no_thresh = df_comp %>%
   filter(thresh == Inf) %>%
-  # filter(grepl("(3k|empirical)", model)) %>%
+  filter(grepl("(3k|empirical)", model)) %>%
   ggplot(aes(depth_bin, prop, color=model)) +
   geom_point() +
   geom_line(aes(group=model)) +
@@ -210,6 +213,7 @@ p_comp_prop_no_thresh
 
 p_comp_prop_thresh = df_comp %>%
   filter((thresh < Inf) | (model == "empirical")) %>%
+  filter(grepl("(3k|empirical)", model)) %>%
   ggplot(aes(depth_bin, prop, color=model)) +
   geom_point() +
   geom_line(aes(group=model)) +
@@ -219,12 +223,47 @@ p_comp_prop_thresh = df_comp %>%
 
 p_comp_prop_thresh
 
-# grid.arrange(p_comp_prop_no_thresh, p_comp_prop_thresh)
+
+p_comp_prop = df_comp %>%
+  filter(grepl("(3k|empirical)", model)) %>%
+  ggplot(aes(depth_bin, prop, color=model)) +
+  geom_point() +
+  geom_line(aes(group=model)) +
+  xlab("depth bin (cm)") +
+  ylab("probability") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  coord_flip() +
+  facet_grid(rows=vars(paths), cols=vars(epoch)) +
+  ggtitle(sprintf("Distribution of depths by model or observed - %s", SESSION_ID))
+
+
+p_comp_prop
+
 
 
 if (config$write) {
   p_comp_no_thresh_file = sprintf("%s-fit_real-p_comp_prop-no_thresh.png", SESSION_ID)
-  ggsave(p_comp_prop_no_thresh, file=file.path("images", "xm_model", p_comp_no_thresh_file))
+  ggsave(
+    p_comp_prop_no_thresh,
+    file=file.path("images", "xm_model", p_comp_no_thresh_file),
+    width=6,
+    height=6,
+    units="in"
+  )
   p_comp_thresh_file = sprintf("%s-fit_real-p_comp_prop-thresh.png", SESSION_ID)
-  ggsave(p_comp_prop_thresh, file=file.path("images", "xm_model", p_comp_thresh_file))
+  ggsave(
+    p_comp_prop_thresh,
+    file=file.path("images", "xm_model", p_comp_thresh_file),
+    width=6,
+    height=6,
+    units="in"
+  )
+  p_comp_file = sprintf("fit_real-p_comp_prop-%s.png", SESSION_ID)
+  ggsave(
+    p_comp_prop,
+    file=file.path("images", "xm_model", p_comp_file),
+    width=8,
+    height=4,
+    units="in"
+  )
 }
