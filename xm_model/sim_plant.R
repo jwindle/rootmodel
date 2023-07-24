@@ -11,7 +11,7 @@ source("shared/functions.R")
 EPOCHS = c(0, 10, 18, 22, 28)
 n_examples = 10
 
-config = read_yaml("xm_model/depth-m23-fit-wheat.yaml")
+config = read_yaml("xm_model/depth-m23-fit-corn.yaml")
 CROP = config$crop
 SESSION_ID = tolower(CROP)
 r = config$r
@@ -238,7 +238,7 @@ p_canon_plants_final
 
 ggsave(
   p_canon_plants_final,
-  file = file.path("images", "xm_model", sprintf("p_canon_plants_final-%s.png", CROP)),
+  file = file.path("images", "xm_model", sprintf("p_canon_plants_final-%s.png", SESSION_ID)),
   width = 6,
   height = 3,
   units = "in"
