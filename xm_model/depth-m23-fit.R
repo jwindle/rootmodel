@@ -10,7 +10,7 @@ source("shared/functions.R")
 
 
 # CONFIG
-config = read_yaml("xm_model/depth-m23-fit-corn.yaml")
+config = read_yaml("xm_model/depth-m23-fit-wheat.yaml")
 CROP = config$crop
 r = config$r
 K = config$K
@@ -133,26 +133,75 @@ head(time_var_df)
 
 
 # Plot mean process
-time_var_df %>% filter(var == "mu_y") %>%
+p_sn_mean = time_var_df %>% filter(var == "mu_y") %>%
   ggplot(aes(time_grid, `50%`)) +
   geom_line() +
-  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25)
+  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25) +
+  xlab("day") +
+  ylab("skew normal mean (cm)") +
+  ggtitle(sprintf("Median and IQR of posterior of skew normal mean by time - %s", SESSION_ID))
+
+p_sn_mean
+
+ggsave(
+  p_sn_mean,
+  file = file.path("images", "xm_model", sprintf("m23-p-sn_mean-%s.png", SESSION_ID)),
+  width = 3,
+  height = 3,
+  units = "in"
+)
 
 
 # Plot sd process
-time_var_df %>% filter(var == "sig_y") %>%
+p_sn_std = time_var_df %>% filter(var == "sig_y") %>%
   ggplot(aes(time_grid, `50%`)) +
   geom_line() +
-  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25)
+  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25) +
+  xlab("day") +
+  ylab("skew normal std dev (cm)") +
+  ggtitle(sprintf("Median and IQR of posterior of skew normal std dev by time - %s", SESSION_ID))
+
+p_sn_std
+
+ggsave(
+  p_sn_std,
+  file = file.path("images", "xm_model", sprintf("m23-p-sn_std-%s.png", SESSION_ID)),
+  width = 3,
+  height = 3,
+  units = "in"
+)
 
 
 # Plot shape process
-time_var_df %>% filter(var == "shape_dm") %>%
+p_sn_shape = time_var_df %>% filter(var == "shape_dm") %>%
   ggplot(aes(time_grid, `50%`)) +
   geom_line() +
-  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25)
+  geom_ribbon(aes(ymin=`25%`, ymax=`75%`), alpha=0.25) +
+  xlab("day") +
+  ylab("skew normal shape") +
+  ggtitle(sprintf("Median and IQR of posterior of skew normal shape by time - %s", SESSION_ID))
+
+p_sn_shape
+
+ggsave(
+  p_sn_shape,
+  file = file.path("images", "xm_model", sprintf("m23-p-sn_shape-%s.png", SESSION_ID)),
+  width = 3,
+  height = 3,
+  units = "in"
+)
 
 
+p_sn_all = grid.arrange(p_sn_mean, p_sn_std, p_sn_shape)
+
+ggsave(
+  p_sn_all,
+  file = file.path("images", "xm_model", sprintf("m23-p-sn_all-%s.png", SESSION_ID)),
+  width = 6,
+  height = 6,
+  units = "in"
+)
+  
 
 # Save for generating plant roots
 
