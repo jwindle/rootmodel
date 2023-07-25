@@ -8,7 +8,6 @@ library("gridExtra")
 library("rstan")
 
 
-
 load_rt_data_old <- function(filename) {
     col_types = cols(
         electrode_bins = col_integer(),
@@ -29,6 +28,13 @@ load_rt_data_old <- function(filename) {
 }
 
 
+#' Load RootTracker data from ACC experiment
+#'
+#' Columns: electrode_pair, paddle, date, device_id, count, uptime,
+#' depth_cm, x, y, crop, rep, bench, days_since_start.
+#' 
+#' @param filename Path to file
+#' @returns A dataframe
 load_rt_data <- function(filename) {
     col_types = cols(
         electrode_pair = col_integer(),
@@ -50,6 +56,19 @@ load_rt_data <- function(filename) {
 }
 
 
+#' Coarsen a covariate of RootTracker data
+#'
+#' The list passed through `...` should have names that correspond to
+#' columns of the RootTracker dataframe.  A list value is the `breaks`
+#' argument passed to the cut function, so it could be a number or a
+#' sequence of values to cut on.  The cut has `include.lowest=TRUE`
+#' and `ordered_result=TRUE`.
+#' 
+#' @param df A RootTracker dataframe
+#' @param ... A list
+#' @returns A dataframe with
+#' @examples
+#' coarsen_rt_data(df, list(days_since_start=c(0, 10, 18, 22, 28)))
 coarsen_rt_data <- function(df, ...) {
     args = list(...)
     col_names = colnames(df)
@@ -64,8 +83,18 @@ coarsen_rt_data <- function(df, ...) {
 }
 
 
-agg_rt_data <- function(df_all, ...) {
-    df_new = df_all %>%
+#' Aggregate RootTracker or coarsed RootTracker data
+#'
+#' The list passed as `...` is passed on to the `group_by` function,
+#' which is the set of columns used to group data.  Those groups are
+#' used to aggregate counts and uptime and then produce the
+#' subsequent rate = (aggregated count) / (aggregated uptime).
+#' 
+#' @param df A RootTracker dataframe or coarsed dataframe
+#' @param ... A list
+#' @returns A dataframe
+agg_rt_data <- function(df, ...) {
+    df_new = df %>%
         group_by(...=...) %>%
         summarize(
                   count=sum(count),
@@ -76,12 +105,15 @@ agg_rt_data <- function(df_all, ...) {
 }
 
 
-coarsen_and_agg_rt_data <- function(df, ...) {
-
-}
-
-
-
+#' Reconstruct root trajectory
+#'
+#' This function is only used by early routines written for this project.
+#'
+#' @param X matrix of x-values on trajectory
+#' @param DM_0 vector of initial slopes
+#' @param DM matrix of subsequent changes in slope
+#' @param grid sequence of x-values to use to create trajectory
+#' @returns An array of paths of dimension (num_samp, num_groups, num_grid)
 reconstruct_path <- function(X, DM_0, DM, grid) {
     ngrid = length(grid)
     X_dim = dim(X)
@@ -96,6 +128,12 @@ reconstruct_path <- function(X, DM_0, DM, grid) {
 }
 
 
+#' Get parameters for log normal distribution from a desired mean and
+#' standard deviation.
+#'
+#' @param m mean
+#' @param s standard deviation
+#' @returns sequence mean and standard deviation paramters of log normal dist.
 log_normal_param <- function(m, s) {
   # Mean and std dev of positive random variable to parameters for
   # log-normal distribution with the same moments.
@@ -114,12 +152,28 @@ file_helper <- function(dir, base, suffix) {
 }
 
 
+#' Get number of kinks
+#'
+#' Get number of kinks before a certain radius `r` for a given step
+#' size `mu_dx`.
+#'
+#' @param r radius
+#' @param mu_dx step size
+#' @returns K the number of kinks
 get_K <- function(r, mu_dx) {
   K = ceiling(r / mu_dx) - 1
   return(K)
 }
 
 
+#' Downsample depths
+#'
+#' Extract subset of sequence via equal spacing along sorted values.
+#'
+#' @param depths A sequence of depths
+#' @param use The fraction of data we want to use
+#' @returns dataframe A dataframe with the subsetted depth and their
+#'   location in the original sequence
 downsample_depths <- function(depths, use=0.1) {
   # We want to use something non-random here to minimize sampling
   # variance and ensure a replicable result.  We return the index so
@@ -132,8 +186,16 @@ downsample_depths <- function(depths, use=0.1) {
   return(df_sort[idc_to_use,])
 }
 
+
+#' Compute what is called lambda in paper
+#'
+#' $$\lambda = (r - x)^+$$
+#'
+#' @param r radius
+#' @param mu_dx the fixed step size
+#' @returns vector
 x_left_for_fixed_dx <- function(r, mu_dx) {
-  k = ceiling(r / mu_dx) - 1
+  k = get_K(r, mu_dx)
   dx = rep(mu_dx, k+1)
   dx[1] = 0.0
   x = cumsum(dx)
@@ -142,12 +204,16 @@ x_left_for_fixed_dx <- function(r, mu_dx) {
 }
 
 
-depth_fit_wrapper <- function(filename) {
-
-
-}
-
-
+#' Extract fixed parameters from sim config
+#'
+#' `depth-MAIN-sim_and_plot.yaml` includes metadata for creating a
+#' grid of parameter values to simulate over as well as for creating
+#' parameters that do not change.
+#'
+#' This takes that metadata creates a list that corresponds to the
+#' data for the parameters that do not change.
+#'
+#' @param param_config A list
 make_base_data <- function(param_config) {
   base = list()
   for (nm in names(param_config)) {
@@ -160,6 +226,16 @@ make_base_data <- function(param_config) {
 }
 
 
+#' Construct dataframe of parameter values to simulate
+#' 
+#' `depth-MAIN-sim_and_plot.yaml` includes metadata for creating a
+#' grid of parameter values to simulate over as well as for creating
+#' parameters that do not change.
+#'
+#' This takes that metadata creates a dataframe of parameters that
+#' corresponds to a factorial combination.
+#'
+#' @param param_config A dataframe
 make_parameter_df <- function(param_config) {
   grid = list()
   for (nm in names(param_config)) {
@@ -175,6 +251,12 @@ make_parameter_df <- function(param_config) {
 }
 
 
+#' Simulate from depth model
+#'
+#' @param model The stan model (compiled via `stan_model`)
+#' @param param_df A dataframe from `make_parameter_df`
+#' @param base_data A list from `make_base_data`
+#' @returns A list of simulation output, one for each parameter combination
 simulate_over_parameter_df <- function(model, param_df, base_data) {
   nr = nrow(param_df)
   param_names = colnames(param_df)
@@ -188,18 +270,32 @@ simulate_over_parameter_df <- function(model, param_df, base_data) {
 }
 
 
+#' Extract depths from model output
+#'
+#' @param samp_list A list from `simulate_over_parameter_df`
+#' @return A list of simulated depths from each model
 extract_depths_list <- function(samp_list) {
   depths_list = lapply(samp_list, function(x){drop(extract(x, "y")[[1]])})
   return(depths_list)
 }
 
 
+#' Create summaries of depth distributions
+#'
+#' @param depths_list list of simulated depths from `extract_depths_list`
+#' @param param_df dataframe of parameter combinations used in simulations
+#' @returns Applying summary to each set of simulated depths
 summarize_depth_distributions <- function(depths_list, param_df) {
   summary_df = cbind(param_df, as.data.frame(t(sapply(depths_list, summary))))
   return(summary_df)
 }
 
 
+#' Make dataframe of depths
+#'
+#' @param depths_list A list of simulated depths (from `extract_depths_list`)
+#' @param param_df dataframe of parameter combinations used in simulations
+#' @returns A tall dataframe of depths and parameters used to simulate each depth
 make_depths_df <- function(depths_list, param_df) {
   df_components = list()
   param_names = names(param_df)
@@ -214,6 +310,9 @@ make_depths_df <- function(depths_list, param_df) {
 }
 
 
+#' Make depths plot
+#'
+#' This is deprecated
 make_depths_plot <- function(depths_df, facet1, facet2) {
 
   primary_cols = c("depth", facet1, facet2)
@@ -252,6 +351,15 @@ make_depths_plot <- function(depths_df, facet1, facet2) {
 }
 
 
+#' Make posterior predictive depths
+#'
+#' Simulate from model using parameters from posterior distribution,
+#' i.e. create the posterior predictive.
+#'
+#' @param model The stan model (i.e. from `stan_model`)
+#' @param par_array The array of parameters from the fit model
+#' @param base A list that makes up the other data needed to run the simulation
+#' @returns An array of simulated depths
 posterior_predictive_depths <- function(model, par_array, base) {
   # Extract par_array here?
   ndim = length(dim(par_array))
@@ -263,6 +371,16 @@ posterior_predictive_depths <- function(model, par_array, base) {
   return(Y)
 }
 
+
+#' Make posterior predictive paths
+#'
+#' Simulate from model using parameters from posterior distribution,
+#' i.e. create the posterior predictive.
+#'
+#' @param model The stan model (i.e. from `stan_model`)
+#' @param par_array The array of parameters from the fit model
+#' @param base A list that makes up the other data needed to run the simulation
+#' @returns An array of simulated paths
 posterior_predictive_paths <- function(model, par_array, base) {
   # Extract par_array here?
   ndim = length(dim(par_array))
@@ -280,6 +398,13 @@ posterior_predictive_paths <- function(model, par_array, base) {
   return(P_array)
 }
 
+
+#' Discretize depths
+#'
+#' @param depths A matrix of depths (samples x epochs)
+#' @param depth_breaks A sequence of depths
+#' @param epoch_levels The levels of the epoch groups, e.g. c("[0,10]", ...)
+#' @returns dataframe with columns depths, binned depths, epochs
 discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
   df_list = list()
   dim_depths = dim(depths)
@@ -296,6 +421,13 @@ discretized_depth_distribution <- function(depths, depth_breaks, epoch_levels) {
   return(df)
 }
 
+
+#' Discretize depths
+#'
+#' @param paths An array of paths (from `posterior_predictive_paths`)
+#' @param depth_breaks A sequence of depths
+#' @param epoch_levels The levels of the epoch groups, e.g. c("[0,10]", ...)
+#' @returns dataframe with columns shallowest_cm, depths_cm, binned depths, epochs
 discretized_depth_distribution_2 <- function(paths, depth_breaks, epoch_levels) {
   df_list = list()
   dim_paths = dim(paths)
@@ -321,6 +453,12 @@ discretized_depth_distribution_2 <- function(paths, depth_breaks, epoch_levels) 
 }
 
 
+#' Discretize depths
+#'
+#' @param refined_paths An array of refined paths 
+#' @param depth_breaks A sequence of depths
+#' @param epoch_levels The levels of the epoch groups, e.g. c("[0,10]", ...)
+#' @returns dataframe with columns shallowest_cm, depths_cm, binned depths, epochs
 discretized_depth_distribution_3 <- function(refined_paths, depth_breaks, epoch_levels) {
   df_list = list()
   paths = refined_paths
@@ -346,16 +484,24 @@ discretized_depth_distribution_3 <- function(refined_paths, depth_breaks, epoch_
 }
 
 
+#' Log transform helper function
 log_transform <- function(y, y0) {
   return(log(-(y - y0)))
 }
 
 
+#' Inverse log transform helper function
 inv_log_transform <- function(x, y0) {
   return(y0 - exp(x))
 }
 
 
+#' Refine paths to a finer grid
+#'
+#' @param P A M x (K+1) matrix of paths
+#' @param kink_sep The x-distance between kinks
+#' @param n The factor by which to refine the grid (e.g. 2 doubles)
+#' @returns A M x (K+1)*n matrix of paths
 refine_paths_matrix <- function(P, kink_sep, n) {
   # Assumes equally spaced kinks / knots
   # P is M x (K+1) matrix
@@ -377,6 +523,14 @@ refine_paths_matrix <- function(P, kink_sep, n) {
 }
 
 
+#' Refine paths to a finer grid
+#'
+#' @param paths An array from `posterior_predictive_paths`
+#' @param mu_dx The x-distance between kinks
+#' @param n The factor by which to refine the grid (e.g. 2 doubles)
+#' @param transform A list with boolean `log_transform` and `offset`
+#'   used for log transform
+#' @returns An array of refined paths
 refine_paths <- function(paths, mu_dx, n, transform) {
   # Assuming we are on an equally spaced grid
   # Paths to start are (sim_sample, kink, param_sample, epoch)
@@ -419,6 +573,19 @@ refine_paths <- function(paths, mu_dx, n, transform) {
 }
 
 
+#' Simulate root trajectories using m10
+#'
+#' @param mdl The stan model from `depth-m10-sim.stan` (compiled using `stan_model`
+#' @param N The number of plants to simulate
+#' @param p A matrix of probabilities of root emergence (time x samp)
+#' @param mu_dm A matrix of mean params (time x samp)
+#' @param sig_dm A matrix of std dev params (time x samp)
+#' @param shape_dm A matrix of shape parameters (time x samp)
+#' @param time_grid A sequence of the time values (days)
+#' @param max_trials The number of trials to use when simulating root emergence
+#' @param r The radius of detection
+#' @param mu_dx The x-step size
+#' @returns A dataframe of plants and root trajectories
 sim_plants <- function(mdl, N, p, mu_dm, sig_dm, shape_dm, time_grid, max_trials, r, mu_dx) {
 
   t_if_needed = function(x) {
