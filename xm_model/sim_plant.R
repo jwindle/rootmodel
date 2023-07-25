@@ -1,17 +1,19 @@
-# -* ess-style: RStudio -*-
+# -* ess-style: RStudio; -*-
+# Jesse Windle, 2023
+
 
 library("plot3D")
 library("yaml")
 # You need tidyr, but do not load it
 
-source("shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 
 # Config
 EPOCHS = c(0, 10, 18, 22, 28)
 n_examples = 10
 
-config = read_yaml("xm_model/depth-m23-fit-corn.yaml")
+config = read_yaml(file.path("xm_model", "depth-m23-fit-corn.yaml"))
 CROP = config$crop
 SESSION_ID = tolower(CROP)
 r = config$r

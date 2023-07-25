@@ -1,5 +1,5 @@
 # -*- ess-style: RStudio -*- #
-# Jesse Windle
+# Jesse Windle, 2023
 
 library("ggplot2")
 library("gridExtra")

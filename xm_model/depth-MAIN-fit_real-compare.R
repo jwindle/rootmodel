@@ -1,8 +1,10 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
-# MUST SET STARTING POINT FOR LOG TRANSFORM
+# Compare posterior predictive of models
 
-source("shared/functions.R")
+
+source(file.path("shared", "functions.R"))
 
 library("rstan")
 library("bayesplot")
@@ -11,7 +13,7 @@ library("gridExtra")
 library("xtable")
 
 
-config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
+config = read_yaml(file.path("xm_model", "depth-MAIN-fit_real-config.yaml"))
 
 SIMS_TO_RUN = config$simulations_to_run
 SIMS_TO_RUN

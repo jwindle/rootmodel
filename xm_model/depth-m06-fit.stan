@@ -1,4 +1,5 @@
 /* -*- c-basic-offset: 4; -*- */
+/* Jesse Windle, 2023 */
 data {
 	int<lower=1> N;
 	int<lower=1> M;

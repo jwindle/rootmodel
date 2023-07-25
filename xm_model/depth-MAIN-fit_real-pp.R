@@ -1,8 +1,9 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
 # Generate posterior predictive
 
-source("shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 library("rstan")
 library("bayesplot")
@@ -10,7 +11,7 @@ library("yaml")
 
 
 # Config
-config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
+config = read_yaml(file.path("xm_model", "depth-MAIN-fit_real-config.yaml"))
 
 SIMS_TO_RUN = config$simulations_to_run
 # SIMS_TO_RUN = c("m09_2k", "m09_3k", "m10_1k", "m10_2k", "m10_3k")

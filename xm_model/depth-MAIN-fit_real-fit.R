@@ -1,7 +1,9 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
-source("shared/functions.R")
+# Fit models to data
 
+source(file.path("shared", "functions.R"))
 
 library("rstan")
 library("bayesplot")
@@ -9,7 +11,7 @@ library("yaml")
 
 
 # CONFIG
-config = read_yaml("xm_model/depth-MAIN-fit_real-config.yaml")
+config = read_yaml(file.path("xm_model", "depth-MAIN-fit_real-config.yaml"))
 
 # EPOCHS = config$epochs
 MODELS_TO_RUN = config$models_to_run

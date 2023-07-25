@@ -1,4 +1,5 @@
 /* -*- c-basic-offset: 4; -*- */
+/* Jesse Windle, 2023 */
 functions {
 	/* From the Stan user guide */
 	real normal_lub_rng(real mu, real sigma, real lb, real ub) {

@@ -1,4 +1,5 @@
 /* -*- c-basic-offset: 4; -*- */
+/* Jesse Windle, 2023 */
 #include "common.stan"
 data {
 	real<lower=0.> mu_dx;        /* dx step size */

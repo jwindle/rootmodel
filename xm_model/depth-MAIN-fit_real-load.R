@@ -1,6 +1,10 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
-source("shared/functions.R")
+# Load and transform experiment data
+
+
+source(file.path("shared", "functions.R"))
 
 library("moments")
 
@@ -22,7 +26,7 @@ pairwise_depths = 0.5 * (depths[seq(1, 21, 2)] + depths[seq(2, 22, 2)])
 
 
 # LOAD
-df_all = load_rt_data("data/acc-1-v3.csv") %>%
+df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
   filter(
     uptime > 0,
     electrode_pair > 1,
@@ -103,7 +107,7 @@ df_moments
 
 
 if (WRITE) {
-  write.csv(df_all, "data/acc-1-v3-cleaned.csv")
-  write.csv(df_time_elec, "data/acc-1-v3-summary.csv")
+  write.csv(df_all, file.path("data", "acc-1-v3-cleaned.csv"))
+  write.csv(df_time_elec, file.path("data", "acc-1-v3-summary.csv"))
   save(df_all, df_time_elec, DEPTH_BINS, file=file.path("cache", "detections.RData"))
 }

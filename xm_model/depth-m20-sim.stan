@@ -1,4 +1,5 @@
 /* -*- c-basic-offset: 4; -*- */
+/* Jesse Windle, 2023 */
 functions {
 	real real_logistic(real x, real lb, real ub) {
 		real d = ub - lb;

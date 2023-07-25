@@ -1,4 +1,5 @@
 /* -*- c-basic-offset: 4; -*- */
+/* Jesse Windle, 2023 */
 functions {
 	real r_sig(real x) {
 		return (1./pi()) * atan(x) + 0.5;

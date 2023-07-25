@@ -1,12 +1,12 @@
 # -*- ess-style: RStudio -*- #
-# Jesse Windle
+# Jesse Windle, 2023
 
 library("ggplot2")
 library("gridExtra")
 
 library("rstan")
 
-source("shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 
 # Config
@@ -15,7 +15,7 @@ SESSION_ID = tolower(CROP)
 
 
 # Load
-df_all = load_rt_data("data/acc-1-v3.csv") %>%
+df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
     filter(uptime > 0, electrode_pair > 1, days_since_start > 4, crop == CROP)
 
 df_all$old_count = df_all$count
