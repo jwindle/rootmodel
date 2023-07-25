@@ -1,11 +1,12 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
-source("shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 library("uuid")
 library("yaml")
 
-config = read_yaml("xm_model/depth-MAIN-sim_and_plot.yaml")
+config = read_yaml(file.path("xm_model", "depth-MAIN-sim_and_plot.yaml"))
 param_config = config[["stan_data"]]
 
 MODELS_TO_RUN = config$models_to_run

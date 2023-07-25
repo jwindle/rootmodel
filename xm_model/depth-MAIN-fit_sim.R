@@ -1,13 +1,14 @@
 # -*- ess-style: RStudio; -*-
+# Jesse Windle, 2023
 
-source("shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 library("rstan")
 library("bayesplot")
 library("yaml")
 
 
-config = read_yaml("xm_model/depth-MAIN-fit_sim.yaml")
+config = read_yaml(file.path("xm_model", "depth-MAIN-fit_sim.yaml"))
 
 MODELS_TO_RUN = config$models_to_run
 MODELS_TO_RUN
