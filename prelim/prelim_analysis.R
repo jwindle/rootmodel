@@ -1,18 +1,23 @@
+# -*- ess-style: RStudio -*- 
 # Jesse Windle, 2023
-# jesse@bayesfactor.net
+
+
+# This is the prototyping file used to create `prelim_analysis.Rmd`.
+# We include it in the repository in case one wants to do additional
+# prototyping.
 
 
 library("ggplot2")
 library("readr")
 library("dplyr")
-
 # library("lme4")
 library("lmerTest")
 library("kernlab")
 
-source("../shared/functions.R")
+source(file.path("shared", "functions.R"))
 
 options(pillar.subtle = FALSE)
+
 
 # Load the data.  We have likely aggregated the data before hand to 24 hour
 # periods, for instance.  To deal with missing data, we may also have tried to
@@ -21,7 +26,7 @@ options(pillar.subtle = FALSE)
 # uptime to be 12.  In that way we have a complete observation of 12 x 22
 # paddles for an entire hour.  
 
-df_all = load_rt_data("../data/acc-1-v3.csv") %>%
+df_all = load_rt_data(file.path("data", "acc-1-v3.csv")) %>%
     filter(uptime > 0, electrode_pair > 1, days_since_start > 4)
 
 df_all$old_count = df_all$count

@@ -1,7 +1,13 @@
 ---
 output: html_document
+author: Jesse Windle
 ---
 
+```{r, echo=FALSE}
+# To compile this Rmd file, set the working directory in R to the `prelim`
+# directory of the repo, then run `rmarkdown::render("prelim_analysis.R")`.
+# rmarkdown will compile the file relative to the file's location.
+```
 
 ```{r, echo=FALSE}
 # Packages and external functions
@@ -11,7 +17,7 @@ library("readr")
 library("dplyr", warn.conflicts = FALSE)
 library("lmerTest")
 library("kernlab")
-source("../shared/functions.R")
+source(file.path("..", "shared", "functions.R"))
 options(pillar.subtle = FALSE)
 ```
 
@@ -72,7 +78,7 @@ of electrodes and the first 4 days.  We also adjust uptime so that it
 is measured in days, specifically electrode area-days.
 
 ```{r}
-df_all = load_rt_data("../data/acc-1-v3.csv") %>%
+df_all = load_rt_data(file.path("..", "data", "acc-1-v3.csv")) %>%
     filter(uptime > 0, electrode_pair > 1, days_since_start > 4) %>%
     mutate(uptime = uptime * 5 / (60 * 24))
 ```
